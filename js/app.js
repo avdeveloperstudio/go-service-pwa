@@ -269,6 +269,58 @@ form.addEventListener('submit', async (e) => {
 
 // === ЛОГИКА ВКЛАДКИ КЛИЕНТОВ ===
 
+// 1. Умное обновление навигации
+function setupNavigation() {
+    const navBtns = document.querySelectorAll('.nav-btn');
+    const tabs = document.querySelectorAll('.tab-content');
+    navBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            navBtns.forEach(b => b.classList.remove('active'));
+            tabs.forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+
+            const targetId = btn.getAttribute('data-target');
+            document.getElementById(targetId).classList.add('active');
+
+            // КРИТИЧНО: Если перешли на вкладку клиентов - принудительно обновляем список
+            if (targetId === 'tab-clients') {
+                renderClientsTab();
+            }
+        });
+    });
+}
+
+// 2. Железобетонный сброс старых обработчиков кнопки Плюс (FAB)
+// Клонируем кнопку, чтобы полностью стереть все старые дублирующиеся addEventListener
+const oldFab = document.getElementById('fab-add');
+const newFab = oldFab.cloneNode(true);
+oldFab.parentNode.replaceChild(newFab, oldFab);
+
+// Вешаем один единственный правильный обработчик на чистую кнопку
+newFab.addEventListener('click', () => {
+    const activeTab = document.querySelector('.tab-content.active').id;
+
+    if (activeTab === 'tab-clients') {
+        // Если мы на вкладке Клиенты - открываем форму клиента
+        document.getElementById('modal-client').classList.remove('hidden');
+        document.getElementById('input-client-name').focus();
+    } else {
+        // Иначе открываем форму новой записи (как было раньше)
+        editingRecord = null;
+        document.getElementById('modal-title').innerText = 'Новая запись';
+        clientDropdown.classList.add('hidden');
+        clientPreview.classList.add('hidden');
+        populateFormDropdowns();
+        inputClient.value = '';
+        clientTrigger.innerText = 'Выберите клиента...';
+        clientSearch.value = '';
+        inputDate.value = formatDateForDB(state.currentDate);
+        inputStatus.value = 'Активна';
+        inputPrice.value = '';
+        modal.classList.remove('hidden');
+    }
+});
+
 // Закрытие окна клиента
 document.getElementById('btn-close-client-modal').addEventListener('click', () => {
     document.getElementById('modal-client').classList.add('hidden');
@@ -289,11 +341,11 @@ document.getElementById('client-form').addEventListener('submit', async (e) => {
                                                         instagram: document.getElementById('input-client-inst').value.trim()
     };
 
-    // Отправляем данные (api.js сам раскидает их в Firebase и Google Sheets)
     const response = await sendData('addClient', { client: newClient });
 
     if (response && response.status === 'success') {
-        // Добавляем в локальный стейт, чтобы сразу увидеть без перезагрузки
+        // Добавляем в локальное состояние
+        if (!state.clients) state.clients = [];
         state.clients.push(newClient);
         renderClientsTab();
 
@@ -307,29 +359,40 @@ document.getElementById('client-form').addEventListener('submit', async (e) => {
     submitBtn.innerText = originalText;
 });
 
-// Отрисовка списка клиентов
+// Безопасная отрисовка списка клиентов
 function renderClientsTab() {
     const list = document.getElementById('clients-list');
+    if (!list) return;
+
     if (!state.clients || state.clients.length === 0) {
-        list.innerHTML = '<p class="empty-state">Список клиентов пуст</p>';
+        list.innerHTML = '<p class="empty-state">Список клиентов пуст или данные еще загружаются...</p>';
         return;
     }
 
-    // Сортируем по алфавиту
-    const sortedClients = [...state.clients].sort((a, b) => a.name.localeCompare(b.name));
+    // Сортируем по алфавиту, защищаясь от пустых имён
+    const sortedClients = [...state.clients].sort((a, b) => {
+        const nameA = a.name ? a.name.toString() : "";
+        const nameB = b.name ? b.name.toString() : "";
+        return nameA.localeCompare(nameB);
+    });
+
     list.innerHTML = '';
 
     sortedClients.forEach(c => {
+        if (!c.name) return; // Пропускаем некорректные записи
+
         const card = document.createElement('div');
-        card.classList.add('record-card'); // Используем стили карточек из журнала
+        card.classList.add('record-card');
         card.innerHTML = `
-        <div class="card-content" style="border-left-color: var(--accent);">
-        <div class="card-header">
-        <span class="card-time" style="font-size: 1.1rem; color: var(--accent);"><i class="ph ph-user"></i> ${c.name}</span>
+        <div class="card-content" style="border-left: 4px solid var(--accent); transform: none !important; position: relative; background: var(--bg-surface-light); padding: 15px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px;">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="card-time" style="font-size: 1.1rem; font-weight: bold; color: var(--accent); display: flex; align-items: center; gap: 5px;">
+        <i class="ph ph-user"></i> ${c.name}
+        </span>
         </div>
-        <div class="card-body" style="margin-top: 10px;">
-        ${c.phone ? `<div style="margin-bottom: 5px;"><i class="ph ph-phone"></i> ${c.phone}</div>` : ''}
-        ${c.instagram ? `<div><i class="ph ph-instagram-logo"></i> ${c.instagram}</div>` : ''}
+        <div class="card-body" style="font-size: 0.95rem;">
+        ${c.phone ? `<div style="margin-bottom: 4px; color: var(--text-main); display: flex; align-items: center; gap: 5px;"><i class="ph ph-phone"></i> ${c.phone}</div>` : ''}
+        ${c.instagram ? `<div style="color: var(--text-muted); font-size: 0.85rem; display: flex; align-items: center; gap: 5px;"><i class="ph ph-instagram-logo"></i> ${c.instagram}</div>` : ''}
         </div>
         </div>
         `;
