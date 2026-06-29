@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Beauty CRM</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <header class="app-header">
+        <h1>Go Service</h1>
+    </header>
+
+    <main id="app-content">
+
+        <section id="tab-journal" class="tab-content active">
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <button id="prev-month"><i class="ph ph-caret-left"></i></button>
+                    <h2 id="current-month-year">Март 2026</h2>
+                    <button id="next-month"><i class="ph ph-caret-right"></i></button>
+                </div>
+                <div class="calendar-grid" id="calendar-days">
+                    </div>
+            </div>
+
+            <div class="timeline-container">
+                <h3 id="selected-date-title">Записи на сегодня</h3>
+                <div id="daily-records" class="records-list">
+                    <p class="empty-state">Загрузка данных...</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-stats" class="tab-content">
+            <div class="stats-container">
+                <h2>Статистика</h2>
+                <div class="chart-card">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <button id="fab-add" class="fab"><i class="ph ph-plus"></i></button>
+
+    <div id="modal-record" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-title">Новая запись</h3>
+                <button id="btn-close-modal" class="icon-btn"><i class="ph ph-x"></i></button>
+            </div>
+            <form id="record-form" class="beauty-form">
+                <div class="form-group">
+                    <label>Клиент</label>
+                    <div class="custom-select" id="client-select-container">
+                        <div class="select-trigger" id="client-trigger">Выберите клиента...</div>
+                        <div class="select-dropdown hidden" id="client-dropdown">
+                            <input type="text" id="client-search" placeholder="Поиск по имени..." autocomplete="off">
+                            <ul id="client-options" class="options-list"></ul>
+                        </div>
+                    </div>
+                    <input type="hidden" id="input-client" required>
+                </div>
+
+                <div id="client-info-preview" class="client-preview hidden">
+                    <span id="preview-phone"></span>
+                    <span id="preview-inst"></span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Дата</label>
+                        <input type="date" id="input-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Время</label>
+                        <select id="input-time" required></select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Категория</label>
+                        <select id="input-category" required>
+                            <option value="" disabled selected>Выберите...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Услуга</label>
+                        <select id="input-service" required>
+                            <option value="" disabled selected>Сначала категория</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Статус</label>
+                        <select id="input-status">
+                            <option value="Активна" selected>Активна</option>
+                            <option value="Исполнена">Исполнена</option>
+                            <option value="Отмена">Отмена</option>
+                            <option value="Перенос">Перенос</option>
+                            <option value="Неявка">Неявка</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Цена (<span class="byn-sign">Б</span>)</label>
+                        <input type="number" id="input-price" placeholder="0.00" step="0.1">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">Сохранить</button>
+            </form>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-btn active" data-target="tab-journal">
+            <i class="ph ph-calendar-blank"></i>
+            <span>Журнал</span>
+        </button>
+        <button class="nav-btn" data-target="tab-stats">
+            <i class="ph ph-chart-line-up"></i>
+            <span>Статистика</span>
+        </button>
+    </nav>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+
+        <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then(registration => {
+              console.log('ServiceWorker успешно зарегистрирован:', registration.scope);
+
+              // Проверяем обновления при каждом открытии страницы
+              registration.update();
+            })
+            .catch(error => {
+              console.log('Ошибка регистрации ServiceWorker:', error);
+            });
+        });
+      }
+    </script>
+
+    </body>
+</html>
