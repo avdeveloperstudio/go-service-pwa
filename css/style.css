@@ -13,11 +13,11 @@
     --accent-hover: #9575CD;
 
     /* Пастельные цвета статусов */
-    --status-active: #78909C;   /* Нейтральный серо-синий */
-    --status-done: #81C784;     /* Мягкий зеленый */
-    --status-cancel: #E57373;   /* Мягкий красный */
-    --status-noshow: #FFB74D;   /* Оранжевый */
-    --status-move: #FFF176;     /* Бледно-желтый */
+    --status-active: #4CAF50;   /* green */
+    --status-done: #435E6F;     /* turquoise */
+    --status-cancel: #9E9E9E;   /* grey */
+    --status-noshow: #EB2F31;   /* red */
+    --status-move: #FF9500;     /* orange-coral */
 
     --radius: 16px;
 }
@@ -253,7 +253,6 @@ body {
     left: 50%;
     transform: translateX(-50%);
 }
-.calendar-day.active .record-dot { background-color: #fff; }
 
 /* =========================================
    ДОПОЛНЕНИЕ: КАРТОЧКИ И СВАЙП
@@ -293,7 +292,7 @@ body {
     background: var(--bg-surface-light);
     padding: 15px;
     border-radius: 12px;
-    border-left: 4px solid var(--status-active);
+    border-left: 10px solid var(--status-active);
     transition: transform 0.3s ease;
     z-index: 2;
     display: flex;
@@ -353,19 +352,14 @@ body {
 .options-list li:hover { background: var(--accent); color: #fff; }
 
 /* Цвета точек календаря */
-.record-dot.dot-active { background-color: var(--status-active); }
-.record-dot.dot-done { background-color: var(--status-done); }
-.record-dot.dot-cancel { background-color: var(--status-cancel); }
-.record-dot.dot-noshow { background-color: var(--status-noshow); }
-.record-dot.dot-move { background-color: var(--status-move); }
-.record-dot.dot-mixed { background-color: var(--accent); }
+.record-dot.dot-active { background-color: var(--status-active) !important; z-index: 10 !important; }
+.record-dot.dot-done { background-color: var(--status-done) !important; z-index: 10 !important; }
+.record-dot.dot-cancel { background-color: var(--status-cancel) !important; z-index: 10 !important; }
+.record-dot.dot-noshow { background-color: var(--status-noshow) !important; z-index: 10 !important; }
+.record-dot.dot-move { background-color: var(--status-move) !important; z-index: 10 !important; }
+.record-dot.dot-mixed { background-color: var(--accent) !important; z-index: 10 !important; }
 
 .record-dot {
     /* Твои текущие стили оставляем... */
     z-index: 2; /* Гарантированно поднимаем над фоном */
-}
-
-/* Добавляем белую обводку только для активного дня, чтобы точка выделялась */
-.calendar-day.active .record-dot {
-    box-shadow: 0 0 0 2px #fff;
 }
