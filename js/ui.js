@@ -99,7 +99,7 @@ function renderDailyRecords() {
     const dayRecords = state.records.filter(r => formatDateForDB(r.date) === selectedDateStr);
 
     if (dayRecords.length === 0) {
-        list.innerHTML = `<p class="empty-state">На этот день записей нет.<br>Отдохните или добавьте новую! ☕</p>`;
+        list.innerHTML = `<p class="empty-state">На этот день записей нет.<br>Отдохни уже наконец! ☕</p>`;
         return;
     }
 
