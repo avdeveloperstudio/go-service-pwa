@@ -1,4 +1,4 @@
-const CACHE_NAME = 'go-service-v2';
+const CACHE_NAME = 'go-service-v3';
 
 // Файлы, которые нужны для работы оффлайн (оболочка приложения)
 const urlsToCache = [

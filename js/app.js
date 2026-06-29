@@ -123,7 +123,8 @@ clientSearch.addEventListener('input', (e) => {
 function triggerClientPreview(selectedName) {
     const clientData = state.clients.find(c => c.name === selectedName);
     if (clientData && (clientData.phone || clientData.instagram)) {
-        document.getElementById('preview-phone').innerHTML = clientData.phone ? `<i class="ph ph-phone"></i> ${clientData.phone}` : '';
+        document.getElementById('preview-phone').innerHTML = clientData.phone ?
+        `<a href="tel:${clientData.phone.replace(/[^+\d]/g, '')}" style="color: var(--accent); text-decoration: none;"><i class="ph ph-phone"></i> ${clientData.phone}</a>` : '';
         document.getElementById('preview-inst').innerHTML = clientData.instagram ? (clientData.instagram.includes('http') ? `<a href="${clientData.instagram}" target="_blank" style="color: var(--accent)"><i class="ph ph-instagram-logo"></i> Перейти</a>` : `<i class="ph ph-instagram-logo"></i> ${clientData.instagram}`) : '';
         clientPreview.classList.remove('hidden');
     } else { clientPreview.classList.add('hidden'); }
@@ -269,7 +270,8 @@ form.addEventListener('submit', async (e) => {
 
 // === ЛОГИКА ВКЛАДКИ КЛИЕНТОВ ===
 
-// 1. Умное обновление навигации
+let editingClient = null; // Переменная для понимания, редактируем мы или создаем
+
 function setupNavigation() {
     const navBtns = document.querySelectorAll('.nav-btn');
     const tabs = document.querySelectorAll('.tab-content');
@@ -282,7 +284,6 @@ function setupNavigation() {
             const targetId = btn.getAttribute('data-target');
             document.getElementById(targetId).classList.add('active');
 
-            // КРИТИЧНО: Если перешли на вкладку клиентов - принудительно обновляем список
             if (targetId === 'tab-clients') {
                 renderClientsTab();
             }
@@ -290,22 +291,21 @@ function setupNavigation() {
     });
 }
 
-// 2. Железобетонный сброс старых обработчиков кнопки Плюс (FAB)
-// Клонируем кнопку, чтобы полностью стереть все старые дублирующиеся addEventListener
 const oldFab = document.getElementById('fab-add');
 const newFab = oldFab.cloneNode(true);
 oldFab.parentNode.replaceChild(newFab, oldFab);
 
-// Вешаем один единственный правильный обработчик на чистую кнопку
 newFab.addEventListener('click', () => {
     const activeTab = document.querySelector('.tab-content.active').id;
 
     if (activeTab === 'tab-clients') {
-        // Если мы на вкладке Клиенты - открываем форму клиента
+        // Создание нового клиента
+        editingClient = null;
+        document.querySelector('#modal-client h3').innerText = 'Новый клиент';
         document.getElementById('modal-client').classList.remove('hidden');
         document.getElementById('input-client-name').focus();
     } else {
-        // Иначе открываем форму новой записи (как было раньше)
+        // Создание записи
         editingRecord = null;
         document.getElementById('modal-title').innerText = 'Новая запись';
         clientDropdown.classList.add('hidden');
@@ -321,13 +321,11 @@ newFab.addEventListener('click', () => {
     }
 });
 
-// Закрытие окна клиента
 document.getElementById('btn-close-client-modal').addEventListener('click', () => {
     document.getElementById('modal-client').classList.add('hidden');
     document.getElementById('client-form').reset();
 });
 
-// Отправка формы клиента
 document.getElementById('client-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -341,14 +339,23 @@ document.getElementById('client-form').addEventListener('submit', async (e) => {
                                                         instagram: document.getElementById('input-client-inst').value.trim()
     };
 
-    const response = await sendData('addClient', { client: newClient });
+    // Проверяем: редактируем или создаем?
+    const action = editingClient ? 'updateClient' : 'addClient';
+    const payload = editingClient ? { oldClient: editingClient, newClient: newClient } : { client: newClient };
+
+    const response = await sendData(action, payload);
 
     if (response && response.status === 'success') {
-        // Добавляем в локальное состояние
-        if (!state.clients) state.clients = [];
-        state.clients.push(newClient);
+        if (editingClient) {
+            // Обновляем в локальном массиве
+            const index = state.clients.findIndex(cl => cl.id === editingClient.id);
+            if (index !== -1) state.clients[index] = newClient;
+        } else {
+            // Добавляем нового
+            if (!state.clients) state.clients = [];
+            state.clients.push(newClient);
+        }
         renderClientsTab();
-
         document.getElementById('modal-client').classList.add('hidden');
         e.target.reset();
     } else {
@@ -359,17 +366,16 @@ document.getElementById('client-form').addEventListener('submit', async (e) => {
     submitBtn.innerText = originalText;
 });
 
-// Безопасная отрисовка списка клиентов
+// Безопасная отрисовка списка клиентов со свайпом (Редактирование и Удаление)
 function renderClientsTab() {
     const list = document.getElementById('clients-list');
     if (!list) return;
 
     if (!state.clients || state.clients.length === 0) {
-        list.innerHTML = '<p class="empty-state">Список клиентов пуст или данные еще загружаются...</p>';
+        list.innerHTML = '<p class="empty-state">Список клиентов пуст...</p>';
         return;
     }
 
-    // Сортируем по алфавиту, защищаясь от пустых имён
     const sortedClients = [...state.clients].sort((a, b) => {
         const nameA = a.name ? a.name.toString() : "";
         const nameB = b.name ? b.name.toString() : "";
@@ -379,23 +385,87 @@ function renderClientsTab() {
     list.innerHTML = '';
 
     sortedClients.forEach(c => {
-        if (!c.name) return; // Пропускаем некорректные записи
+        if (!c.name) return;
 
         const card = document.createElement('div');
         card.classList.add('record-card');
+
+        // Добавили обе кнопки в нижний слой
         card.innerHTML = `
-        <div class="card-content" style="border-left: 4px solid var(--accent); transform: none !important; position: relative; background: var(--bg-surface-light); padding: 15px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px;">
+        <div class="card-actions-bg">
+        <button class="icon-btn edit-btn"><i class="ph ph-pencil-simple"></i></button>
+        <button class="icon-btn delete-btn"><i class="ph ph-trash"></i></button>
+        </div>
+        <div class="card-content" style="border-left: 4px solid var(--accent);">
         <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
         <span class="card-time" style="font-size: 1.1rem; font-weight: bold; color: var(--accent); display: flex; align-items: center; gap: 5px;">
         <i class="ph ph-user"></i> ${c.name}
         </span>
         </div>
         <div class="card-body" style="font-size: 0.95rem;">
-        ${c.phone ? `<div style="margin-bottom: 4px; color: var(--text-main); display: flex; align-items: center; gap: 5px;"><i class="ph ph-phone"></i> ${c.phone}</div>` : ''}
+        ${c.phone ? `<a href="tel:${c.phone.replace(/[^+\d]/g, '')}" style="margin-bottom: 4px; color: var(--text-main); display: flex; align-items: center; gap: 5px; text-decoration: none;"><i class="ph ph-phone"></i> ${c.phone}</a>` : ''}
         ${c.instagram ? `<div style="color: var(--text-muted); font-size: 0.85rem; display: flex; align-items: center; gap: 5px;"><i class="ph ph-instagram-logo"></i> ${c.instagram}</div>` : ''}
         </div>
         </div>
         `;
+
+        // --- ЛОГИКА СВАЙПА ---
+        const content = card.querySelector('.card-content');
+        let startX = 0;
+
+        content.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+        }, {passive: true});
+
+        content.addEventListener('touchend', (e) => {
+            const endX = e.changedTouches[0].clientX;
+            const diff = startX - endX;
+
+            if (diff > 40) {
+                // Свайп влево
+                document.querySelectorAll('.record-card.swiped').forEach(el => el.classList.remove('swiped'));
+                card.classList.add('swiped');
+            } else if (diff < -40) {
+                // Свайп вправо
+                card.classList.remove('swiped');
+            }
+        });
+
+        // Простой клик по карточке теперь только закрывает свайп (если он открыт)
+        content.addEventListener('click', () => {
+            if (card.classList.contains('swiped')) {
+                card.classList.remove('swiped');
+            }
+        });
+
+        // --- КНОПКИ ДЕЙСТВИЙ (ПОД СВАЙПОМ) ---
+
+        // 1. Кнопка Редактирования
+        card.querySelector('.edit-btn').addEventListener('click', () => {
+            editingClient = c;
+            document.querySelector('#modal-client h3').innerText = 'Редактирование клиента';
+            document.getElementById('input-client-name').value = c.name || '';
+            document.getElementById('input-client-phone').value = c.phone || '';
+            document.getElementById('input-client-inst').value = c.instagram || '';
+            document.getElementById('modal-client').classList.remove('hidden');
+
+            // Прячем кнопки обратно после открытия окна
+            card.classList.remove('swiped');
+        });
+
+        // 2. Кнопка Удаления
+        card.querySelector('.delete-btn').addEventListener('click', async () => {
+            if(confirm(`Удалить клиента ${c.name}? Записи в журнале останутся.`)) {
+                const response = await sendData('deleteClient', { client: c });
+                if (response && response.status === 'success') {
+                    state.clients = state.clients.filter(cl => cl.id !== c.id);
+                    renderClientsTab();
+                } else {
+                    alert("Ошибка при удалении.");
+                }
+            }
+        });
+
         list.appendChild(card);
     });
 }

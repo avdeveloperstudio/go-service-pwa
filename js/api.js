@@ -25,7 +25,7 @@ async function fetchData() {
                                                                                          db.collection("settings").doc("appData").get()
         ]);
 
-        const clients = clientsSnap.docs.map(doc => doc.data());
+        const clients = clientsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const directoryMap = servicesSnap.docs.map(doc => doc.data());
         const settings = settingsSnap.exists ? settingsSnap.data() : { times: [], statuses: [], categories: [] };
 
@@ -85,6 +85,14 @@ async function sendData(action, payload) {
         } else if (action === "addClient") {
             let docRef = await db.collection("clients").add(payload.client);
             payload.client.id = docRef.id;
+        } else if (action === "updateClient") {
+            let updatedData = { ...payload.newClient };
+            delete updatedData.id;
+            await db.collection("clients").doc(payload.oldClient.id).update(updatedData);
+            payload.newClient.id = payload.oldClient.id; // Возвращаем ID на место
+        } else if (action === "deleteClient") {
+            if (!payload.client.id) throw new Error("Нет ID клиента");
+            await db.collection("clients").doc(payload.client.id).delete();
         }
 
         // 2. Фоновый бэкап в Google Таблицы
