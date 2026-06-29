@@ -359,3 +359,13 @@ body {
 .record-dot.dot-noshow { background-color: var(--status-noshow); }
 .record-dot.dot-move { background-color: var(--status-move); }
 .record-dot.dot-mixed { background-color: var(--accent); }
+
+.record-dot {
+    /* Твои текущие стили оставляем... */
+    z-index: 2; /* Гарантированно поднимаем над фоном */
+}
+
+/* Добавляем белую обводку только для активного дня, чтобы точка выделялась */
+.calendar-day.active .record-dot {
+    box-shadow: 0 0 0 2px #fff;
+}
