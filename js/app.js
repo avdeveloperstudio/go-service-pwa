@@ -7,7 +7,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const data = await fetchData();
     if (data && !data.status) {
         Object.assign(state, data);
-        renderCalendar(); renderDailyRecords();
+        renderCalendar();
+        renderDailyRecords();
+        renderClientsTab();
     } else { alert("Не удалось загрузить данные."); }
 });
 
@@ -40,25 +42,29 @@ const inputStatus = document.getElementById('input-status');
 const inputPrice = document.getElementById('input-price');
 const clientPreview = document.getElementById('client-info-preview');
 
-// === ДОБАВЛЕНИЕ НОВОЙ ЗАПИСИ (Клик по плюсу) ===
+// === УМНАЯ КНОПКА ПЛЮС (FAB) ===
 document.getElementById('fab-add').addEventListener('click', () => {
-    editingRecord = null;
-    document.getElementById('modal-title').innerText = 'Новая запись';
+    const activeTab = document.querySelector('.tab-content.active').id;
 
-    // Сначала скрываем список клиентов, чтобы он не маячил
-    clientDropdown.classList.add('hidden');
-    clientPreview.classList.add('hidden');
-
-    populateFormDropdowns();
-
-    inputClient.value = '';
-    clientTrigger.innerText = 'Выберите клиента...';
-    clientSearch.value = ''; // Очищаем поиск
-    inputDate.value = formatDateForDB(state.currentDate);
-    inputStatus.value = 'Активна';
-    inputPrice.value = '';
-
-    modal.classList.remove('hidden');
+    if (activeTab === 'tab-clients') {
+        // Если мы на вкладке Клиенты - открываем форму клиента
+        document.getElementById('modal-client').classList.remove('hidden');
+        document.getElementById('input-client-name').focus();
+    } else {
+        // Иначе открываем форму новой записи (как было раньше)
+        editingRecord = null;
+        document.getElementById('modal-title').innerText = 'Новая запись';
+        clientDropdown.classList.add('hidden');
+        clientPreview.classList.add('hidden');
+        populateFormDropdowns();
+        inputClient.value = '';
+        clientTrigger.innerText = 'Выберите клиента...';
+        clientSearch.value = '';
+        inputDate.value = formatDateForDB(state.currentDate);
+        inputStatus.value = 'Активна';
+        inputPrice.value = '';
+        modal.classList.remove('hidden');
+    }
 });
 
 document.getElementById('btn-close-modal').addEventListener('click', () => {
@@ -260,3 +266,73 @@ form.addEventListener('submit', async (e) => {
 
     submitBtn.disabled = false; submitBtn.innerText = originalText;
 });
+
+// === ЛОГИКА ВКЛАДКИ КЛИЕНТОВ ===
+
+// Закрытие окна клиента
+document.getElementById('btn-close-client-modal').addEventListener('click', () => {
+    document.getElementById('modal-client').classList.add('hidden');
+    document.getElementById('client-form').reset();
+});
+
+// Отправка формы клиента
+document.getElementById('client-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerText;
+    submitBtn.disabled = true;
+    submitBtn.innerText = 'Сохранение...';
+
+    const newClient = {
+        name: document.getElementById('input-client-name').value.trim(),
+                                                        phone: document.getElementById('input-client-phone').value.trim(),
+                                                        instagram: document.getElementById('input-client-inst').value.trim()
+    };
+
+    // Отправляем данные (api.js сам раскидает их в Firebase и Google Sheets)
+    const response = await sendData('addClient', { client: newClient });
+
+    if (response && response.status === 'success') {
+        // Добавляем в локальный стейт, чтобы сразу увидеть без перезагрузки
+        state.clients.push(newClient);
+        renderClientsTab();
+
+        document.getElementById('modal-client').classList.add('hidden');
+        e.target.reset();
+    } else {
+        alert("Ошибка при сохранении: " + (response.message || ""));
+    }
+
+    submitBtn.disabled = false;
+    submitBtn.innerText = originalText;
+});
+
+// Отрисовка списка клиентов
+function renderClientsTab() {
+    const list = document.getElementById('clients-list');
+    if (!state.clients || state.clients.length === 0) {
+        list.innerHTML = '<p class="empty-state">Список клиентов пуст</p>';
+        return;
+    }
+
+    // Сортируем по алфавиту
+    const sortedClients = [...state.clients].sort((a, b) => a.name.localeCompare(b.name));
+    list.innerHTML = '';
+
+    sortedClients.forEach(c => {
+        const card = document.createElement('div');
+        card.classList.add('record-card'); // Используем стили карточек из журнала
+        card.innerHTML = `
+        <div class="card-content" style="border-left-color: var(--accent);">
+        <div class="card-header">
+        <span class="card-time" style="font-size: 1.1rem; color: var(--accent);"><i class="ph ph-user"></i> ${c.name}</span>
+        </div>
+        <div class="card-body" style="margin-top: 10px;">
+        ${c.phone ? `<div style="margin-bottom: 5px;"><i class="ph ph-phone"></i> ${c.phone}</div>` : ''}
+        ${c.instagram ? `<div><i class="ph ph-instagram-logo"></i> ${c.instagram}</div>` : ''}
+        </div>
+        </div>
+        `;
+        list.appendChild(card);
+    });
+}

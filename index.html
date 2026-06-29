@@ -34,6 +34,15 @@
             </div>
         </section>
 
+        <section id="tab-clients" class="tab-content">
+            <div class="timeline-container">
+                <h3>Список клиентов</h3>
+                <div id="clients-list" class="records-list">
+                    <p class="empty-state">Загрузка данных...</p>
+                </div>
+            </div>
+        </section>
+
         <section id="tab-stats" class="tab-content">
             <div class="stats-container">
                 <h2>Статистика</h2>
@@ -118,11 +127,41 @@
         </div>
     </div>
 
+    <div id="modal-client" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Новый клиент</h3>
+                <button id="btn-close-client-modal" class="icon-btn"><i class="ph ph-x"></i></button>
+            </div>
+            <form id="client-form" class="beauty-form">
+                <div class="form-group">
+                    <label>Имя клиента</label>
+                    <input type="text" id="input-client-name" placeholder="Например: Мария" required>
+                </div>
+                <div class="form-group">
+                    <label>Телефон</label>
+                    <input type="tel" id="input-client-phone" placeholder="+375...">
+                </div>
+                <div class="form-group">
+                    <label>Instagram</label>
+                    <input type="text" id="input-client-inst" placeholder="@username или ссылка">
+                </div>
+                <button type="submit" class="btn-primary">Сохранить клиента</button>
+            </form>
+        </div>
+    </div>
+
     <nav class="bottom-nav">
         <button class="nav-btn active" data-target="tab-journal">
             <i class="ph ph-calendar-blank"></i>
             <span>Журнал</span>
         </button>
+
+        <button class="nav-btn" data-target="tab-clients">
+            <i class="ph ph-users"></i>
+            <span>Клиенты</span>
+        </button>
+
         <button class="nav-btn" data-target="tab-stats">
             <i class="ph ph-chart-line-up"></i>
             <span>Статистика</span>
