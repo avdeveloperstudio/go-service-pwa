@@ -7,6 +7,7 @@
     <title>Go Service</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="manifest" href="manifest.json">
 </head>
 <body>
@@ -103,12 +104,86 @@
         </section>
 
         <section id="tab-stats" class="tab-content">
-            <div class="stats-container">
-                <h2>Статистика</h2>
-                <div class="chart-card">
-                    <canvas id="revenueChart"></canvas>
+            <div class="timeline-container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="margin: 0;">Статистика</h3>
                 </div>
-            </div>
+
+                <div class="stats-filters" style="display: flex; gap: 8px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px;">
+                    <button class="stat-filter-btn" data-period="today">Сегодня</button>
+                    <button class="stat-filter-btn" data-period="week">7 дней</button>
+                    <button class="stat-filter-btn active" data-period="month">30 дней</button>
+                    <button class="stat-filter-btn" data-period="all">Всё время</button>
+                    <button class="stat-filter-btn" data-period="custom"><i class="ph ph-calendar"></i> Даты</button>
+                </div>
+
+                <div id="stat-custom-dates" style="display: none; gap: 10px; margin-bottom: 20px; background: var(--bg-surface-light); padding: 12px; border-radius: 12px;">
+                    <div style="flex: 1;">
+                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">От</label>
+                        <input type="date" id="stat-date-from" style="width: 100%; padding: 8px; border-radius: 6px; background: var(--bg-surface); color: white; border: none; outline: none;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">До</label>
+                        <input type="date" id="stat-date-to" style="width: 100%; padding: 8px; border-radius: 6px; background: var(--bg-surface); color: white; border: none; outline: none;">
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div style="background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05)); border: 1px solid rgba(76, 175, 80, 0.3); border-radius: 12px; padding: 15px;">
+                            <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 5px;">Доход</div>
+                            <div id="stat-revenue-total" style="font-size: 1.4rem; font-weight: bold; color: var(--status-active);">0.00 <span class="icon-byn"></span></div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, rgba(235, 47, 49, 0.15), rgba(235, 47, 49, 0.05)); border: 1px solid rgba(235, 47, 49, 0.3); border-radius: 12px; padding: 15px;">
+                            <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 5px;">Расход</div>
+                            <div id="stat-expense-total" style="font-size: 1.4rem; font-weight: bold; color: var(--status-noshow);">0.00 <span class="icon-byn"></span></div>
+                        </div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(179, 157, 219, 0.2), rgba(179, 157, 219, 0.05)); border: 1px solid rgba(179, 157, 219, 0.4); border-radius: 12px; padding: 15px; text-align: center;">
+                        <div style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 5px;">Чистая прибыль</div>
+                        <div id="stat-net-profit" style="font-size: 1.8rem; font-weight: bold; color: var(--accent);">0.00 <span class="icon-byn"></span></div>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-surface-light); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+                    <div style="font-size: 0.95rem; font-weight: bold; margin-bottom: 12px; display: flex; justify-content: space-between;">
+                        <span>Воронка записей</span>
+                        <span style="color: var(--text-muted); font-weight: normal;">Всего: <span id="stat-records-total" style="color: var(--text-main); font-weight: bold;">0</span></span>
+                    </div>
+                    <div id="stat-statuses-list" style="display: flex; flex-direction: column; gap: 8px;">
+                        </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                    <div style="background: var(--bg-surface-light); border-radius: 12px; padding: 12px; text-align: center;">
+                        <div style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 4px;">Мин. чек</div>
+                        <div id="stat-min-check" style="font-size: 1.1rem; font-weight: bold; color: var(--text-main);">0.00 <span class="icon-byn" style="font-size: 0.8em;"></span></div>
+                    </div>
+                    <div style="background: var(--bg-surface-light); border-radius: 12px; padding: 12px; text-align: center; border-bottom: 2px solid var(--accent);">
+                        <div style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 4px;">Ср. чек</div>
+                        <div id="stat-avg-check" style="font-size: 1.1rem; font-weight: bold; color: var(--accent);">0.00 <span class="icon-byn" style="font-size: 0.8em;"></span></div>
+                    </div>
+                    <div style="background: var(--bg-surface-light); border-radius: 12px; padding: 12px; text-align: center;">
+                        <div style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 4px;">Макс. чек</div>
+                        <div id="stat-max-check" style="font-size: 1.1rem; font-weight: bold; color: var(--text-main);">0.00 <span class="icon-byn" style="font-size: 0.8em;"></span></div>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-surface-light); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+                    <div id="chart-revenue-title" style="font-size: 0.95rem; font-weight: bold; margin-bottom: 15px; color: var(--accent);">Динамика дохода</div>
+                    <div style="position: relative; height: 220px; width: 100%;">
+                        <canvas id="chart-revenue"></canvas>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-surface-light); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+                    <div id="chart-categories-title" style="font-size: 0.95rem; font-weight: bold; margin-bottom: 15px; color: var(--accent);">Топ категорий</div>
+                    <div style="position: relative; height: 220px; width: 100%;">
+                        <canvas id="chart-categories"></canvas>
+                    </div>
+                </div>
+
+                <div style="height: 40px;"></div> </div>
         </section>
     </main>
 

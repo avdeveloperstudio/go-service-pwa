@@ -90,9 +90,9 @@ export function initMenuAndSettings() {
     });
 
     btnAddCategory.addEventListener('click', async () => {
-        const catName = prompt("Введите название новой категории:");
+        const catName = prompt("Название:");
         if (!catName) return;
-        const inStats = confirm("Учитывать записи этой категории в статистике?\n\n[ ОК ] - Да, учитывать\n[ Отмена ] - Нет");
+        const inStats = confirm("Учитывать в статистике?");
         state.categories.push({ name: catName, inStats: inStats });
         await saveSettings();
         renderCategories();
@@ -230,7 +230,7 @@ function setupCategoriesEventDelegation() {
             if (editCatBtn) {
                 const newCatName = prompt("Редактировать название:", typeof catObj === 'object' ? catObj.name : catObj);
                 if (!newCatName) return;
-                const newInStats = confirm("Учитывать в статистике?\n\n[ ОК ] - Да\n[ Отмена ] - Нет");
+                const newInStats = confirm("Учитывать в статистике?");
 
                 const idx = state.categories.indexOf(catObj);
                 if(idx > -1) state.categories[idx] = { name: newCatName, inStats: newInStats };
@@ -280,7 +280,7 @@ function setupCategoriesEventDelegation() {
         const addSrvBtn = e.target.closest('.btn-add-service');
         if (addSrvBtn) {
             const catName = addSrvBtn.getAttribute('data-cat');
-            const newSrvName = prompt(`Название новой услуги:`);
+            const newSrvName = prompt(`Название:`);
             if (!newSrvName) return;
             if (!state.directoryMap) state.directoryMap = [];
             state.directoryMap.push({ category: catName, service: newSrvName });

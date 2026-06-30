@@ -5,6 +5,7 @@ import { renderClientsTab } from './tab-clients.js';
 import { formatDateForDB } from './utils.js';
 import { initMenuAndSettings } from './menu-settings.js';
 import { renderAllRecordsTab } from './tab-records.js';
+import { initStatsTab, renderStats } from './tab-stats.js';
 
 // === ЭЛЕМЕНТЫ ===
 const modal = document.getElementById('modal-record');
@@ -26,6 +27,7 @@ const clientPreview = document.getElementById('client-info-preview');
 document.addEventListener("DOMContentLoaded", async () => {
     setupNavigation();
     initMenuAndSettings();
+    initStatsTab();
     const data = await fetchData();
     if (data && !data.status) {
         Object.assign(state, data);
@@ -48,6 +50,7 @@ function setupNavigation() {
             document.getElementById(targetId).classList.add('active');
             if (targetId === 'tab-clients') { renderClientsTab(); }
             if (targetId === 'tab-records') { renderAllRecordsTab(); }
+            if (targetId === 'tab-stats') { renderStats(); }
         });
     });
 }
