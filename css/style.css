@@ -121,7 +121,7 @@ body {
 }
 
 /* =========================================
- Ф ОРМЫ И МОДАЛЬНЫЕ ОКНА                *
+ ФОРМЫ И МОДАЛЬНЫЕ ОКНА
  ========================================= */
 .fab {
     position: fixed;
@@ -137,6 +137,11 @@ body {
     box-shadow: 0 4px 12px rgba(179, 157, 219, 0.3);
     z-index: 90;
     cursor: pointer;
+    /* Центрируем иконку идеально ровно */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
 }
 
 .modal-overlay {

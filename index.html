@@ -96,6 +96,52 @@
                         <i class="ph ph-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.2rem;"></i>
                         <input type="text" id="search-all-records-input" placeholder="Поиск по любому параметру" style="width: 100%; padding: 12px 12px 12px 40px; background: var(--bg-surface-light); border: 1px solid transparent; color: var(--text-main); border-radius: 8px; font-size: 1rem; outline: none;">
                     </div>
+
+                    <button id="btn-toggle-filters" style="background: none; border: none; color: var(--accent); font-size: 0.95rem; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 5px; width: max-content;">
+                        <i class="ph ph-faders"></i> Фильтр
+                    </button>
+
+                    <div id="records-filters-panel" style="display: none; grid-template-columns: 1fr 1fr; gap: 12px; background: var(--bg-surface-light); padding: 15px; border-radius: 12px;">
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
+                            <label style="font-size: 0.8rem; color: var(--text-muted);">Категория</label>
+                            <select id="filter-category" style="width: 100%; padding: 8px; background: var(--bg-surface); color: var(--text-main); border: none; border-radius: 6px; outline: none; font-size: 0.9rem;">
+                                <option value="all">Все</option>
+                                <option value="none">Без категории</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
+                            <label style="font-size: 0.8rem; color: var(--text-muted);">Услуга</label>
+                            <select id="filter-service" style="width: 100%; padding: 8px; background: var(--bg-surface); color: var(--text-main); border: none; border-radius: 6px; outline: none; font-size: 0.9rem;">
+                                <option value="all">Все</option>
+                                <option value="none">Без услуги</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 5px; position: relative;">
+                            <label style="font-size: 0.8rem; color: var(--text-muted);">Клиент</label>
+                            <input type="hidden" id="filter-client-value" value="all">
+
+                            <div id="filter-client-trigger" style="width: 100%; padding: 8px; background: var(--bg-surface); color: var(--text-main); border: none; border-radius: 6px; font-size: 0.9rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                                <span id="filter-client-text" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Все</span>
+                                <i class="ph ph-caret-down"></i>
+                            </div>
+
+                            <div id="filter-client-dropdown" style="display: none; position: absolute; top: calc(100% + 5px); left: 0; min-width: 200px; background: var(--bg-surface-light); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.3); max-height: 250px; flex-direction: column;">
+                                <div style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <input type="text" id="filter-client-search" placeholder="Поиск клиента..." style="width: 100%; padding: 8px; background: var(--bg-surface); color: var(--text-main); border: 1px solid transparent; border-radius: 6px; outline: none; font-size: 0.9rem;">
+                                </div>
+                                <ul id="filter-client-options" style="list-style: none; padding: 0; margin: 0; overflow-y: auto; flex: 1;">
+                                    </ul>
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
+                            <label style="font-size: 0.8rem; color: var(--text-muted);">Статус</label>
+                            <select id="filter-status" style="width: 100%; padding: 8px; background: var(--bg-surface); color: var(--text-main); border: none; border-radius: 6px; outline: none; font-size: 0.9rem;">
+                                <option value="all">Все</option>
+                            </select>
+                        </div>
+                        <button id="btn-reset-filters" style="grid-column: span 2; padding: 10px; background: transparent; border: 1px dashed var(--status-noshow); color: var(--status-noshow); border-radius: 8px; margin-top: 5px; cursor: pointer;">Сбросить фильтр</button>
+                    </div>
+
                 </div>
                 <div id="all-records-list" class="records-list">
                     <p class="empty-state">Загрузка данных...</p>

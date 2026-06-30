@@ -41,6 +41,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 function setupNavigation() {
     const navBtns = document.querySelectorAll('.nav-btn');
     const tabs = document.querySelectorAll('.tab-content');
+    const fab = document.getElementById('fab-add'); // Наша кнопка ПЛЮС
+
     navBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             navBtns.forEach(b => b.classList.remove('active'));
@@ -48,9 +50,17 @@ function setupNavigation() {
             btn.classList.add('active');
             const targetId = btn.getAttribute('data-target');
             document.getElementById(targetId).classList.add('active');
+
             if (targetId === 'tab-clients') { renderClientsTab(); }
             if (targetId === 'tab-records') { renderAllRecordsTab(); }
             if (targetId === 'tab-stats') { renderStats(); }
+
+            // Логика скрытия кнопки +
+            if (targetId === 'tab-records' || targetId === 'tab-stats') {
+                fab.style.display = 'none';
+            } else {
+                fab.style.display = 'flex'; // Возвращаем её обратно
+            }
         });
     });
 }
