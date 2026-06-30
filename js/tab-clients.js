@@ -2,22 +2,47 @@ import { state } from './state.js';
 import { sendData } from './api.js';
 import { openClientEditModal } from './main.js';
 
+let isSearchInitialized = false;
+
 export function renderClientsTab() {
     const list = document.getElementById('clients-list');
+    const searchInput = document.getElementById('search-clients-input');
     if (!list) return;
+
+    // Инициализируем слушатель поиска (только один раз, чтобы избежать дублей)
+    if (!isSearchInitialized && searchInput) {
+        searchInput.addEventListener('input', () => renderClientsTab());
+        isSearchInitialized = true;
+    }
 
     if (!state.clients || state.clients.length === 0) {
         list.innerHTML = '<p class="empty-state">Список клиентов пуст...</p>';
         return;
     }
 
-    const sortedClients = [...state.clients].sort((a, b) => {
+    const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+    // Фильтруем клиентов по имени, телефону или инстаграму
+    const filteredClients = state.clients.filter(c => {
+        if (!query) return true;
+        const nameMatch = c.name && c.name.toLowerCase().includes(query);
+        const phoneMatch = c.phone && c.phone.toLowerCase().includes(query);
+        const instMatch = c.instagram && c.instagram.toLowerCase().includes(query);
+        return nameMatch || phoneMatch || instMatch;
+    });
+
+    const sortedClients = [...filteredClients].sort((a, b) => {
         const nameA = a.name ? a.name.toString() : "";
         const nameB = b.name ? b.name.toString() : "";
         return nameA.localeCompare(nameB);
     });
 
     list.innerHTML = '';
+
+    if (sortedClients.length === 0) {
+        list.innerHTML = '<p class="empty-state">По вашему запросу ничего не найдено</p>';
+        return;
+    }
 
     sortedClients.forEach(c => {
         if (!c.name) return;
@@ -35,7 +60,7 @@ export function renderClientsTab() {
         </span>
         </div>
         <div class="card-body" style="font-size: 0.95rem;">
-        ${c.phone ? `<a href="tel:${c.phone.replace(/[^+\d]/g, '')}" style="margin-bottom: 4px; color: var(--text-main); display: flex; align-items: center; gap: 5px; text-decoration: none;"><i class="ph ph-phone"></i> ${c.phone}</a>` : ''}
+        ${c.phone ? `<div style="margin-bottom: 4px; color: var(--text-main); display: flex; align-items: center; gap: 5px;"><i class="ph ph-phone"></i> <a href="tel:${c.phone.replace(/[^+\d]/g, '')}" style="color: inherit; text-decoration: underline; display: inline;">${c.phone}</a></div>` : ''}
         ${c.instagram ? `<div style="color: var(--text-muted); font-size: 0.85rem; display: flex; align-items: center; gap: 5px;"><i class="ph ph-instagram-logo"></i> ${c.instagram}</div>` : ''}
         </div>
         </div>

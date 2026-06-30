@@ -178,8 +178,15 @@ body {
 .icon-btn { background: none; border: none; color: var(--text-main); font-size: 1.2rem; }
 
 .beauty-form .form-group { margin-bottom: 15px; }
-.beauty-form .form-row { display: flex; gap: 15px; }
-.beauty-form .form-row .form-group { flex: 1; }
+.beauty-form .form-row {
+    display: flex;
+    gap: 15px;
+    width: 100%;
+}
+.beauty-form .form-row .form-group {
+    flex: 1;
+    min-width: 0; /* Железобетонно запрещает полям вылезать за свои границы в iOS */
+}
 
 .beauty-form label {
     display: block;

@@ -66,7 +66,13 @@
 
         <section id="tab-clients" class="tab-content">
             <div class="timeline-container">
-                <h3>Список клиентов</h3>
+                <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;">
+                    <h3 style="margin: 0;">Список клиентов</h3>
+                    <div style="position: relative;">
+                        <i class="ph ph-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.2rem;"></i>
+                        <input type="text" id="search-clients-input" placeholder="Поиск (имя, телефон, инстаграм)..." style="width: 100%; padding: 12px 12px 12px 40px; background: var(--bg-surface-light); border: 1px solid transparent; color: var(--text-main); border-radius: 8px; font-size: 1rem; outline: none;">
+                    </div>
+                </div>
                 <div id="clients-list" class="records-list">
                     <p class="empty-state">Загрузка данных...</p>
                 </div>

@@ -123,7 +123,7 @@ clientSearch.addEventListener('input', (e) => {
 function triggerClientPreview(selectedName) {
     const clientData = state.clients.find(c => c.name === selectedName);
     if (clientData && (clientData.phone || clientData.instagram)) {
-        document.getElementById('preview-phone').innerHTML = clientData.phone ? `<a href="tel:${clientData.phone.replace(/[^+\d]/g, '')}" style="color: var(--accent); text-decoration: none;"><i class="ph ph-phone"></i> ${clientData.phone}</a>` : '';
+        document.getElementById('preview-phone').innerHTML = clientData.phone ? `<div style="display: flex; align-items: center; gap: 5px; color: var(--accent);"><i class="ph ph-phone"></i> <a href="tel:${clientData.phone.replace(/[^+\d]/g, '')}" style="color: inherit; text-decoration: underline; display: inline;">${clientData.phone}</a></div>` : '';
         document.getElementById('preview-inst').innerHTML = clientData.instagram ? (clientData.instagram.includes('http') ? `<a href="${clientData.instagram}" target="_blank" style="color: var(--accent)"><i class="ph ph-instagram-logo"></i> Перейти</a>` : `<i class="ph ph-instagram-logo"></i> ${clientData.instagram}`) : '';
         clientPreview.classList.remove('hidden');
     } else { clientPreview.classList.add('hidden'); }
