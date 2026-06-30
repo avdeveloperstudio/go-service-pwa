@@ -30,15 +30,23 @@
             <ul id="sidebar-settings-menu" class="sidebar-nav" style="display: none;">
                 <li id="btn-sidebar-back" style="color: var(--text-muted);"><i class="ph ph-arrow-left"></i> Назад</li>
                 <li id="setting-time-slots"><i class="ph ph-clock"></i> Слоты времени</li>
+                <li id="setting-categories"><i class="ph ph-folder"></i> Категории и Услуги</li>
             </ul>
 
             <div id="sidebar-time-slots-view" style="display: none; flex: 1; overflow-y: auto; padding: 0 20px 20px;">
                 <ul class="sidebar-nav" style="padding: 10px 0;">
                     <li id="btn-time-slots-back" style="color: var(--text-muted); padding: 0 0 15px 0;"><i class="ph ph-arrow-left"></i> Назад</li>
                 </ul>
-                <div id="time-slots-list" style="margin-bottom: 20px;">
-                    </div>
+                <div id="time-slots-list" style="margin-bottom: 20px;"></div>
                 <button id="btn-add-time-slot" class="btn-primary"><i class="ph ph-plus"></i> Добавить слот</button>
+            </div>
+
+            <div id="sidebar-categories-view" style="display: none; flex: 1; overflow-y: auto; padding: 0 20px 20px;">
+                <ul class="sidebar-nav" style="padding: 10px 0;">
+                    <li id="btn-categories-back" style="color: var(--text-muted); padding: 0 0 15px 0;"><i class="ph ph-arrow-left"></i> Назад</li>
+                </ul>
+                <div id="categories-list" style="margin-bottom: 20px;"></div>
+                <button id="btn-add-category" class="btn-primary"><i class="ph ph-plus"></i> Добавить категорию</button>
             </div>
         </div>
     </div>
@@ -150,8 +158,8 @@
                     </div>
                     <div class="form-group">
                         <label>Услуга</label>
-                        <select id="input-service" required>
-                            <option value="" disabled selected>Сначала категория</option>
+                        <select id="input-service">
+                            <option value=""></option>
                         </select>
                     </div>
                 </div>

@@ -26,31 +26,17 @@ export async function fetchData() {
         ]);
 
         const clients = clientsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const directoryMap = servicesSnap.docs.map(doc => doc.data());
+        const records = recordsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const settings = settingsSnap.exists ? settingsSnap.data() : { times: [], statuses: [], categories: [] };
 
-        // Сохраняем строгий порядок категорий из Таблицы
-        const originalCategories = settings.categories || [];
-        let categories = [...new Set(directoryMap.map(item => item.category))];
-        categories.sort((a, b) => {
-            let ia = originalCategories.indexOf(a);
-            let ib = originalCategories.indexOf(b);
-            if (ia === -1) ia = 999;
-            if (ib === -1) ib = 999;
-            return ia - ib;
-        });
+        // Подтягиваем кастомные услуги (если их создавали через приложение), иначе берем из Таблицы
+        const directoryMap = settings.customDirectoryMap || servicesSnap.docs.map(doc => doc.data());
 
-        const originalServices = settings.services || [];
+        // Подтягиваем категории и приводим их к формату { name: "Стрижка", inStats: true }
+        let categories = settings.categories || [...new Set(directoryMap.map(item => item.category))];
+        categories = categories.map(c => typeof c === 'string' ? { name: c, inStats: true } : c);
+
         let uniqueServices = [...new Set(directoryMap.map(item => item.service))];
-        uniqueServices.sort((a, b) => {
-            let ia = originalServices.indexOf(a);
-            let ib = originalServices.indexOf(b);
-            if (ia === -1) ia = 999;
-            if (ib === -1) ib = 999;
-            return ia - ib;
-        });
-
-        const records = recordsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         return {
             categories: categories,

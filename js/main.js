@@ -83,13 +83,19 @@ document.getElementById('btn-close-modal').addEventListener('click', () => { mod
 document.getElementById('btn-close-client-modal').addEventListener('click', () => { document.getElementById('modal-client').classList.add('hidden'); document.getElementById('client-form').reset(); });
 
 // === ФОРМА ЗАПИСИ (ЖУРНАЛ) ===
+
 function populateFormDropdowns() {
     renderClientList([...state.clients].sort((a, b) => a.name.localeCompare(b.name)));
     inputTime.innerHTML = '';
     state.times.forEach(t => { inputTime.innerHTML += `<option value="${t}">${t}</option>`; });
     inputCategory.innerHTML = '<option value="" disabled selected hidden>Выберите категорию...</option>';
-    state.categories.forEach(cat => { inputCategory.innerHTML += `<option value="${cat}">${cat}</option>`; });
-    inputService.innerHTML = '<option value="" disabled selected hidden>Сначала выберите категорию</option>';
+
+    // Распаковываем категории с учетом их нового формата (объекты)
+    state.categories.forEach(cat => {
+        const catName = typeof cat === 'object' ? cat.name : cat;
+        inputCategory.innerHTML += `<option value="${catName}">${catName}</option>`;
+    });
+    inputService.innerHTML = '<option value="">-- Без услуги --</option>';
 }
 
 function renderClientList(clients) {
@@ -134,16 +140,12 @@ function triggerClientPreview(selectedName) {
 
 inputCategory.addEventListener('change', (e) => {
     const selectedCat = e.target.value;
-    inputService.innerHTML = '<option value="" disabled selected hidden>Выберите услугу...</option>';
+    inputService.innerHTML = '<option value="">-- Без услуги --</option>';
     if (!state.directoryMap) return;
     let services = [...new Set(state.directoryMap.filter(item => item.category === selectedCat).map(item => item.service))];
-    services.sort((a, b) => {
-        let ia = state.services.indexOf(a), ib = state.services.indexOf(b);
-        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
-    });
     if (services.length > 0) {
         services.forEach(srv => inputService.innerHTML += `<option value="${srv}">${srv}</option>`);
-    } else { inputService.innerHTML = '<option value="" disabled selected hidden>Нет услуг</option>'; }
+    }
 });
 
 export function openEditModal(record) {
