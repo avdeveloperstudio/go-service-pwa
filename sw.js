@@ -1,14 +1,19 @@
-const CACHE_NAME = 'go-service-v3';
+const CACHE_NAME = 'go-service-v4';
 
 // Файлы, которые нужны для работы оффлайн (оболочка приложения)
-const urlsToCache = [
-    './',
+cconst urlsToCache = [
+'./',
 './index.html',
 './css/style.css',
-'./js/app.js',
+'./js/main.js',
 './js/api.js',
-'./js/ui.js',
-'./manifest.json'
+'./js/state.js',
+'./js/utils.js',
+'./js/tab-appointments.js',
+'./js/tab-clients.js',
+'./js/menu-settings.js',
+'./manifest.json',
+'./img/byn.svg',
 ];
 
 // Установка Service Worker и первичное кэширование

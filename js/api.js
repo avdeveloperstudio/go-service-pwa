@@ -15,7 +15,7 @@ db.enablePersistence().catch(function(err) { console.warn("Оффлайн кэш
 
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbywbPsFijSn-4mBpeoNMu1YmaIR2FS5jOFAvZh0zK2_VaT16krwWrL1X1Xw1luEGDFtug/exec";
 
-async function fetchData() {
+export async function fetchData() {
     try {
         // Загружаем всё параллельно, включая твои настройки
         const [clientsSnap, servicesSnap, recordsSnap, settingsSnap] = await Promise.all([
@@ -67,7 +67,7 @@ async function fetchData() {
     }
 }
 
-async function sendData(action, payload) {
+export async function sendData(action, payload) {
     try {
         // 1. Мгновенное обновление в Firebase
         if (action === "addRecord") {
@@ -93,6 +93,8 @@ async function sendData(action, payload) {
         } else if (action === "deleteClient") {
             if (!payload.client.id) throw new Error("Нет ID клиента");
             await db.collection("clients").doc(payload.client.id).delete();
+        } else if (action === "updateSettings") {
+            await db.collection("settings").doc("appData").update(payload.settings);
         }
 
         // 2. Фоновый бэкап в Google Таблицы

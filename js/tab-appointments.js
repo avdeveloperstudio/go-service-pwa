@@ -1,34 +1,17 @@
-// js/ui.js
+import { state } from './state.js';
+import { formatDateForDB } from './utils.js';
+import { sendData, fetchData } from './api.js';
+import { openEditModal } from './main.js'; // Функция модалки приедет из main.js
 
-function formatDateForDB(dateInput) {
-    if (!dateInput) return "";
-
-    // Если дата уже в формате YYYY-MM-DD, просто возвращаем её,
-    // чтобы избежать паразитных сдвигов часовых поясов!
-    if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
-        return dateInput;
-    }
-
-    const d = new Date(dateInput);
-    let month = '' + (d.getMonth() + 1);
-    let day = '' + d.getDate();
-    const year = d.getFullYear();
-    if (month.length < 2) month = '0' + month;
-    if (day.length < 2) day = '0' + day;
-    return [year, month, day].join('-');
-}
-
-function renderCalendar() {
+export function renderCalendar() {
     const calendarDays = document.getElementById('calendar-days');
     const monthYearText = document.getElementById('current-month-year');
-
     const date = state.currentDate;
     const year = date.getFullYear();
     const month = date.getMonth();
-
     const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
-    monthYearText.innerText = `${monthNames[month]} ${year}`;
 
+    monthYearText.innerText = `${monthNames[month]} ${year}`;
     calendarDays.innerHTML = '';
     const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
     daysOfWeek.forEach(day => {
@@ -39,7 +22,6 @@ function renderCalendar() {
 
     let firstDay = new Date(year, month, 1).getDay();
     firstDay = firstDay === 0 ? 6 : firstDay - 1;
-
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
     for (let i = 0; i < firstDay; i++) {
@@ -52,25 +34,20 @@ function renderCalendar() {
         const dayDiv = document.createElement('div');
         dayDiv.classList.add('calendar-day');
         dayDiv.innerText = i;
-
         const cellDate = new Date(year, month, i);
         const cellDateFormatted = formatDateForDB(cellDate);
-
         const dayRecords = state.records.filter(r => formatDateForDB(r.date) === cellDateFormatted);
 
         if (dayRecords.length > 0) {
             const dot = document.createElement('span');
             dot.classList.add('record-dot');
-
-            // Логика цветов
             const statuses = [...new Set(dayRecords.map(r => r.status))];
             if (statuses.length === 1) {
                 const statusMap = { 'Активна': 'active', 'Исполнена': 'done', 'Отмена': 'cancel', 'Неявка': 'noshow', 'Перенос': 'move' };
                 dot.classList.add(`dot-${statusMap[statuses[0]]}`);
             } else {
-                dot.classList.add('dot-mixed'); // Фиолетовая, если статусы разные
+                dot.classList.add('dot-mixed');
             }
-
             dayDiv.appendChild(dot);
         }
 
@@ -83,19 +60,16 @@ function renderCalendar() {
             renderCalendar();
             renderDailyRecords();
         });
-
         calendarDays.appendChild(dayDiv);
     }
 }
 
-function renderDailyRecords() {
+export function renderDailyRecords() {
     const list = document.getElementById('daily-records');
     const title = document.getElementById('selected-date-title');
     const selectedDateStr = formatDateForDB(state.currentDate);
-
     const options = { day: 'numeric', month: 'long' };
     title.innerText = `Записи на ${state.currentDate.toLocaleDateString('ru-RU', options)}`;
-
     const dayRecords = state.records.filter(r => formatDateForDB(r.date) === selectedDateStr);
 
     if (dayRecords.length === 0) {
@@ -109,13 +83,8 @@ function renderDailyRecords() {
     dayRecords.forEach(record => {
         const card = document.createElement('div');
         card.classList.add('record-card', `status-${record.status}`);
+        let priceHTML = record.price > 0 ? `<div class="card-price">${record.price.toFixed(2)} <span class="icon-byn"></span></div>` : '';
 
-        let priceHTML = '';
-        if (record.price > 0) {
-            priceHTML = `<div class="card-price">${record.price.toFixed(2)} <span class="byn-sign">Б</span></div>`;
-        }
-
-        // Обновленная структура: задний фон (кнопки) и передний фон (контент)
         card.innerHTML = `
         <div class="card-actions-bg">
         <button class="icon-btn edit-btn"><i class="ph ph-pencil-simple"></i></button>
@@ -136,47 +105,71 @@ function renderDailyRecords() {
         </div>
         `;
 
-        // === Логика Свайпа (Сенсорного управления) ===
         const content = card.querySelector('.card-content');
         let startX = 0;
 
-        content.addEventListener('touchstart', (e) => {
-            startX = e.touches[0].clientX;
-        }, {passive: true});
-
+        content.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, {passive: true});
         content.addEventListener('touchend', (e) => {
             const endX = e.changedTouches[0].clientX;
             const diff = startX - endX;
-
             if (diff > 40) {
-                // Свайп влево -> закрываем все другие карточки и открываем эту
                 document.querySelectorAll('.record-card.swiped').forEach(c => c.classList.remove('swiped'));
                 card.classList.add('swiped');
             } else if (diff < -40) {
-                // Свайп вправо -> закрываем
                 card.classList.remove('swiped');
             }
         });
-
-        // НОВОЕ: Закрытие по клику на саму карточку
         content.addEventListener('click', () => {
-            if (card.classList.contains('swiped')) {
-                card.classList.remove('swiped');
-            }
+            if (card.classList.contains('swiped')) card.classList.remove('swiped');
         });
 
-        // События кнопок
-        card.querySelector('.quick-status-select').addEventListener('change', (e) => {
-            window.handleQuickStatus(record, e.target.value, e.target);
-        });
-        card.querySelector('.edit-btn').addEventListener('click', () => { window.openEditModal(record); });
-        card.querySelector('.delete-btn').addEventListener('click', () => {
-            if(confirm(`Удалить запись клиента ${record.client}?`)) { window.deleteRecordAPI(record); }
-        });
+            card.querySelector('.quick-status-select').addEventListener('change', (e) => { handleQuickStatus(record, e.target.value, e.target); });
+            card.querySelector('.edit-btn').addEventListener('click', () => { openEditModal(record); });
+            card.querySelector('.delete-btn').addEventListener('click', () => {
+                if(confirm(`Удалить запись клиента ${record.client}?`)) { deleteRecordAPI(record); }
+            });
 
-        list.appendChild(card);
+            list.appendChild(card);
     });
 }
 
+async function handleQuickStatus(record, newStatus, selectElement) {
+    if (newStatus === 'Перенос') {
+        openEditModal(record);
+        document.getElementById('input-status').value = 'Перенос';
+        selectElement.value = record.status;
+        return;
+    }
+    let updatedRecord = { ...record, status: newStatus, date: formatDateForDB(record.date) };
+    const formattedOldRecord = { ...record, date: formatDateForDB(record.date) };
+
+    if (newStatus === 'Исполнена') {
+        let price = prompt("Введите итоговую сумму (Br):", record.price || "");
+        if (price === null) { selectElement.value = record.status; return; }
+        updatedRecord.price = parseFloat(price.replace(',', '.')) || 0;
+    }
+
+    selectElement.disabled = true;
+    const response = await sendData('updateRecord', { oldRecord: formattedOldRecord, newRecord: updatedRecord });
+    if (response && response.status === 'success') {
+        const data = await fetchData();
+        if (data && !data.status) { Object.assign(state, data); renderCalendar(); renderDailyRecords(); }
+    } else {
+        alert("Ошибка при обновлении статуса");
+        selectElement.value = record.status;
+    }
+    selectElement.disabled = false;
+}
+
+async function deleteRecordAPI(record) {
+    const formattedRecord = { ...record, date: formatDateForDB(record.date) };
+    const response = await sendData('deleteRecord', { record: formattedRecord });
+    if (response && response.status === 'success') {
+        const data = await fetchData();
+        if (data && !data.status) { Object.assign(state, data); renderCalendar(); renderDailyRecords(); }
+    } else { alert("Ошибка при удалении."); }
+}
+
+// Кнопки переключения месяцев
 document.getElementById('prev-month').addEventListener('click', () => { state.currentDate.setMonth(state.currentDate.getMonth() - 1); renderCalendar(); renderDailyRecords(); });
 document.getElementById('next-month').addEventListener('click', () => { state.currentDate.setMonth(state.currentDate.getMonth() + 1); renderCalendar(); renderDailyRecords(); });

@@ -368,3 +368,46 @@ body {
 .records-list {
     padding-bottom: 110px;
 }
+
+/* Иконка белорусского рубля */
+.icon-byn {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    background-color: currentColor;
+    /* Развернутая запись для WebKit (Chrome, Safari, iOS) */
+    -webkit-mask-image: url('../img/byn.svg');
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    /* Стандартная запись */
+    mask-image: url('../img/byn.svg');
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    vertical-align: -0.15em;
+}
+
+/* =========================================
+ Б ОКОВОЕ МЕНЮ И НАСТРОЙКИ                     *
+ ========================================= */
+#sidebar-overlay { align-items: stretch; justify-content: flex-start; }
+.sidebar-menu {
+    background: var(--bg-surface); width: 280px; height: 100%;
+    transform: translateX(-100%); transition: transform 0.3s ease;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.5); display: flex; flex-direction: column;
+}
+#sidebar-overlay:not(.hidden) .sidebar-menu { transform: translateX(0); }
+.sidebar-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--bg-surface-light); }
+.sidebar-nav { list-style: none; padding: 10px 0; margin: 0; }
+.sidebar-nav li { padding: 15px 20px; display: flex; align-items: center; gap: 15px; font-size: 1.1rem; cursor: pointer; transition: background 0.2s; }
+.sidebar-nav li:hover { background: var(--bg-surface-light); color: var(--accent); }
+
+/* Элементы списка времени */
+.time-slot-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 15px; background: var(--bg-surface-light);
+    border-radius: 8px; margin-bottom: 8px;
+}
+.time-slot-item .time-val { font-size: 1.1rem; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+.time-slot-actions { display: flex; gap: 10px; }
