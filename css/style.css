@@ -396,7 +396,7 @@ body {
 }
 
 /* =========================================
- Б ОКОВОЕ МЕНЮ И НАСТРОЙКИ                     *
+ БОКОВОЕ МЕНЮ И НАСТРОЙКИ
  ========================================= */
 #sidebar-overlay { align-items: stretch; justify-content: flex-start; }
 .sidebar-menu {
@@ -418,3 +418,42 @@ body {
 }
 .time-slot-item .time-val { font-size: 1.1rem; font-weight: 500; display: flex; align-items: center; gap: 8px; }
 .time-slot-actions { display: flex; gap: 10px; }
+
+/* =========================================
+   АККОРДЕОНЫ (СВОРАЧИВАЕМЫЕ СПИСКИ ЗАПИСЕЙ)
+   ========================================= */
+.group-header {
+    background: var(--bg-surface-light);
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    color: var(--text-main);
+    transition: background 0.2s;
+}
+.group-header:active { background: var(--bg-surface); }
+.group-header .group-title { display: flex; align-items: center; gap: 10px; }
+.group-header .group-count { color: var(--text-muted); font-size: 0.9rem; font-weight: normal; }
+.group-header i.ph-caret-down { transition: transform 0.3s; }
+.group-header.open i.ph-caret-down { transform: rotate(180deg); }
+
+.group-content {
+    display: none;
+    padding-left: 10px;
+    margin-bottom: 15px;
+    border-left: 2px solid var(--bg-surface-light);
+}
+.group-content.open {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Специфично для года (чуть крупнее) */
+.group-header.year-header { font-size: 1.1rem; border-left: 4px solid var(--accent); }
+/* Специфично для недели */
+.group-header.week-header { border-left: 4px solid var(--status-active); }

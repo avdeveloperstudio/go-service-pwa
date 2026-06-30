@@ -1,4 +1,4 @@
-const CACHE_NAME = 'go-service-v5';
+const CACHE_NAME = 'go-service-v6';
 
 // Файлы, которые нужны для работы оффлайн (оболочка приложения)
 cconst urlsToCache = [
@@ -12,6 +12,7 @@ cconst urlsToCache = [
 './js/tab-appointments.js',
 './js/tab-clients.js',
 './js/menu-settings.js',
+'./js/tab-records.js',
 './manifest.json',
 './img/byn.svg',
 ];

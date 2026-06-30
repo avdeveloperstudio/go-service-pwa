@@ -45,7 +45,7 @@
 
     <main id="app-content">
 
-        <section id="tab-journal" class="tab-content active">
+        <section id="tab-schedule" class="tab-content active">
             <div class="calendar-container">
                 <div class="calendar-header">
                     <button id="prev-month"><i class="ph ph-caret-left"></i></button>
@@ -70,10 +70,25 @@
                     <h3 style="margin: 0;">Список клиентов</h3>
                     <div style="position: relative;">
                         <i class="ph ph-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.2rem;"></i>
-                        <input type="text" id="search-clients-input" placeholder="Поиск (имя, телефон, инстаграм)..." style="width: 100%; padding: 12px 12px 12px 40px; background: var(--bg-surface-light); border: 1px solid transparent; color: var(--text-main); border-radius: 8px; font-size: 1rem; outline: none;">
+                        <input type="text" id="search-clients-input" placeholder="Поиск по любому параметру" style="width: 100%; padding: 12px 12px 12px 40px; background: var(--bg-surface-light); border: 1px solid transparent; color: var(--text-main); border-radius: 8px; font-size: 1rem; outline: none;">
                     </div>
                 </div>
                 <div id="clients-list" class="records-list">
+                    <p class="empty-state">Загрузка данных...</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-records" class="tab-content">
+            <div class="timeline-container">
+                <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;">
+                    <h3 style="margin: 0;">Все записи</h3>
+                    <div style="position: relative;">
+                        <i class="ph ph-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.2rem;"></i>
+                        <input type="text" id="search-all-records-input" placeholder="Поиск по любому параметру" style="width: 100%; padding: 12px 12px 12px 40px; background: var(--bg-surface-light); border: 1px solid transparent; color: var(--text-main); border-radius: 8px; font-size: 1rem; outline: none;">
+                    </div>
+                </div>
+                <div id="all-records-list" class="records-list">
                     <p class="empty-state">Загрузка данных...</p>
                 </div>
             </div>
@@ -188,8 +203,13 @@
     </div>
 
     <nav class="bottom-nav">
-        <button class="nav-btn active" data-target="tab-journal">
+        <button class="nav-btn active" data-target="tab-schedule">
             <i class="ph ph-calendar-blank"></i>
+            <span>Расписание</span>
+        </button>
+
+        <button class="nav-btn" data-target="tab-records">
+            <i class="ph ph-list-dashes"></i>
             <span>Записи</span>
         </button>
 

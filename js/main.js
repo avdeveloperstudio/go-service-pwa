@@ -1,9 +1,10 @@
 import { fetchData, sendData } from './api.js';
 import { state, appState } from './state.js';
-import { renderCalendar, renderDailyRecords } from './tab-appointments.js';
+import { renderCalendar, renderDailyRecords } from './tab-schedule.js';
 import { renderClientsTab } from './tab-clients.js';
 import { formatDateForDB } from './utils.js';
 import { initMenuAndSettings } from './menu-settings.js';
+import { renderAllRecordsTab } from './tab-records.js';
 
 // === ЭЛЕМЕНТЫ ===
 const modal = document.getElementById('modal-record');
@@ -31,6 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         renderCalendar();
         renderDailyRecords();
         renderClientsTab();
+        renderAllRecordsTab();
     } else { alert("Не удалось загрузить данные."); }
 });
 
@@ -45,6 +47,7 @@ function setupNavigation() {
             const targetId = btn.getAttribute('data-target');
             document.getElementById(targetId).classList.add('active');
             if (targetId === 'tab-clients') { renderClientsTab(); }
+            if (targetId === 'tab-records') { renderAllRecordsTab(); }
         });
     });
 }
@@ -191,7 +194,12 @@ form.addEventListener('submit', async (e) => {
 
     if (response && response.status === 'success') {
         const data = await fetchData();
-        if (data && !data.status) { Object.assign(state, data); renderCalendar(); renderDailyRecords(); }
+        if (data && !data.status) {
+            Object.assign(state, data);
+            renderCalendar();
+            renderDailyRecords();
+            renderAllRecordsTab(); // <-- Вот эта строчка обновит наш список записей!
+        }
         modal.classList.add('hidden'); form.reset();
     } else { alert("Ошибка при сохранении: " + (response.message || "")); }
     submitBtn.disabled = false; submitBtn.innerText = originalText;
