@@ -6,6 +6,7 @@ import { formatDateForDB } from './utils.js';
 import { initMenuAndSettings } from './menu-settings.js';
 import { renderAllRecordsTab } from './tab-records.js';
 import { initStatsTab, renderStats } from './tab-stats.js';
+import { renderExpensesTab } from './tab-expenses.js';
 
 // === ЭЛЕМЕНТЫ ===
 const modal = document.getElementById('modal-record');
@@ -22,6 +23,14 @@ const inputService = document.getElementById('input-service');
 const inputStatus = document.getElementById('input-status');
 const inputPrice = document.getElementById('input-price');
 const clientPreview = document.getElementById('client-info-preview');
+
+const modalExpense = document.getElementById('modal-expense');
+const formExpense = document.getElementById('expense-form');
+const inputExpName = document.getElementById('input-expense-name');
+const inputExpSeller = document.getElementById('input-expense-seller');
+const inputExpDate = document.getElementById('input-expense-date');
+const inputExpPrice = document.getElementById('input-expense-price');
+const inputExpCategory = document.getElementById('input-expense-category');
 
 // === ИНИЦИАЛИЗАЦИЯ ===
 document.addEventListener("DOMContentLoaded", async () => {
@@ -76,6 +85,13 @@ document.getElementById('fab-add').addEventListener('click', () => {
         document.getElementById('input-client-inst').value = '';
         document.getElementById('modal-client').classList.remove('hidden');
         document.getElementById('input-client-name').focus();
+    } else if (activeTab === 'tab-expenses') {
+        appState.editingExpense = null;
+        document.getElementById('modal-expense-title').innerText = 'Новый расход';
+        populateExpenseDropdowns();
+        formExpense.reset();
+        inputExpDate.value = formatDateForDB(state.currentDate);
+        modalExpense.classList.remove('hidden');
     } else {
         appState.editingRecord = null;
         document.getElementById('modal-title').innerText = 'Новая запись';
@@ -93,7 +109,9 @@ document.getElementById('fab-add').addEventListener('click', () => {
 });
 
 document.getElementById('btn-close-modal').addEventListener('click', () => { modal.classList.add('hidden'); form.reset(); });
-document.getElementById('btn-close-client-modal').addEventListener('click', () => { document.getElementById('modal-client').classList.add('hidden'); document.getElementById('client-form').reset(); });
+document.getElementById('btn-close-client-modal').addEventListener('click', () => { document.getElementById('modal-client').classList.add('hidden');
+document.getElementById('btn-close-expense-modal').addEventListener('click', () => { modalExpense.classList.add('hidden'); formExpense.reset(); });
+document.getElementById('client-form').reset(); });
 
 // === ФОРМА ЗАПИСИ (ЖУРНАЛ) ===
 
@@ -249,5 +267,69 @@ document.getElementById('client-form').addEventListener('submit', async (e) => {
         document.getElementById('modal-client').classList.add('hidden');
         e.target.reset();
     } else { alert("Ошибка при сохранении: " + (response.message || "")); }
+    submitBtn.disabled = false; submitBtn.innerText = originalText;
+});
+
+// === ФОРМА РАСХОДОВ ===
+document.getElementById('btn-close-expense-modal').addEventListener('click', () => {
+    modalExpense.classList.add('hidden');
+    formExpense.reset();
+});
+
+function populateExpenseDropdowns() {
+    inputExpCategory.innerHTML = '<option value="" disabled selected hidden>Выберите категорию...</option>';
+    state.categories.forEach(cat => {
+        const catName = typeof cat === 'object' ? cat.name : cat;
+        inputExpCategory.innerHTML += `<option value="${catName}">${catName}</option>`;
+    });
+}
+
+export function openExpenseEditModal(expense) {
+    appState.editingExpense = expense;
+    document.getElementById('modal-expense-title').innerText = 'Редактировать расход';
+    populateExpenseDropdowns();
+
+    inputExpName.value = expense.name || '';
+    inputExpSeller.value = expense.seller || '';
+    inputExpDate.value = formatDateForDB(expense.date);
+    inputExpPrice.value = expense.price || '';
+
+    inputExpCategory.value = expense.category || '';
+
+    modalExpense.classList.remove('hidden');
+}
+
+formExpense.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = formExpense.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerText;
+    submitBtn.disabled = true; submitBtn.innerText = 'Сохранение...';
+
+    const newExpense = {
+        name: inputExpName.value.trim(),
+                             seller: inputExpSeller.value.trim(),
+                             date: inputExpDate.value,
+                             price: parseFloat(inputExpPrice.value.replace(',', '.')) || 0,
+                             category: inputExpCategory.value
+    };
+
+    const action = appState.editingExpense ? 'updateExpense' : 'addExpense';
+    const payload = appState.editingExpense ? { oldExpense: appState.editingExpense, newExpense: newExpense } : { expense: newExpense };
+
+    const response = await sendData(action, payload);
+
+    if (response && response.status === 'success') {
+        if (appState.editingExpense) {
+            const index = state.expenses.findIndex(r => r.id === appState.editingExpense.id);
+            if (index !== -1) state.expenses[index] = { id: appState.editingExpense.id, ...newExpense };
+        } else {
+            if (!state.expenses) state.expenses = [];
+                             state.expenses.push(payload.expense);
+        }
+        renderExpensesTab();
+        modalExpense.classList.add('hidden');
+        formExpense.reset();
+    } else { alert("Ошибка при сохранении: " + (response.message || "")); }
+
     submitBtn.disabled = false; submitBtn.innerText = originalText;
 });

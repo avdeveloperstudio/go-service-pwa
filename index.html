@@ -28,6 +28,7 @@
             </div>
 
             <ul id="sidebar-main-menu" class="sidebar-nav">
+                <li id="nav-expenses"><i class="ph ph-receipt"></i> Расходы</li>
                 <li id="nav-settings"><i class="ph ph-gear"></i> Настройки</li>
             </ul>
 
@@ -234,6 +235,22 @@
 
                 <div style="height: 40px;"></div> </div>
         </section>
+
+        <section id="tab-expenses" class="tab-content">
+            <div class="timeline-container">
+                <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;">
+                    <h3 style="margin: 0;">Расходы</h3>
+                    <div style="position: relative;">
+                        <i class="ph ph-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.2rem;"></i>
+                        <input type="text" id="search-expenses-input" placeholder="Поиск по расходам" style="width: 100%; padding: 12px 12px 12px 40px; background: var(--bg-surface-light); border: 1px solid transparent; color: var(--text-main); border-radius: 8px; font-size: 1rem; outline: none;">
+                    </div>
+                </div>
+
+                <div id="expenses-list" class="records-list">
+                    <p class="empty-state">Загрузка данных...</p>
+                </div>
+            </div>
+        </section>
     </main>
 
     <button id="fab-add" class="fab"><i class="ph ph-plus"></i></button>
@@ -330,6 +347,44 @@
                     <input type="text" id="input-client-inst" placeholder="Вставьте ссылку @instagram">
                 </div>
                 <button type="submit" class="btn-primary">Сохранить клиента</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-expense" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-expense-title">Новый расход</h3>
+                <button id="btn-close-expense-modal" class="icon-btn"><i class="ph ph-x"></i></button>
+            </div>
+            <form id="expense-form" class="beauty-form">
+                <div class="form-group">
+                    <label>Наименование товара *</label>
+                    <input type="text" id="input-expense-name" placeholder="Что купили?" required>
+                </div>
+                <div class="form-group">
+                    <label>Продавец</label>
+                    <input type="text" id="input-expense-seller" placeholder="Название магазина (необязательно)">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Дата *</label>
+                        <input type="date" id="input-expense-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Цена (<span class="icon-byn"></span>) *</label>
+                        <input type="number" id="input-expense-price" placeholder="0.00" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Категория *</label>
+                        <select id="input-expense-category" required>
+                            <option value="" disabled selected>Выберите...</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">Сохранить</button>
             </form>
         </div>
     </div>

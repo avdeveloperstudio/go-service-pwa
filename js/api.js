@@ -13,20 +13,23 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 db.enablePersistence().catch(function(err) { console.warn("Оффлайн кэш недоступен", err); });
 
-const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbywbPsFijSn-4mBpeoNMu1YmaIR2FS5jOFAvZh0zK2_VaT16krwWrL1X1Xw1luEGDFtug/exec";
+const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbz6TBD-vnP97Pc8ogDy_fU3PgV4qYzXACcJk4TWwj_t2SvUb-deKZRtp4UBiOHniH2h9w/exec";
 
 export async function fetchData() {
     try {
         // Загружаем всё параллельно, включая твои настройки
-        const [clientsSnap, servicesSnap, recordsSnap, settingsSnap] = await Promise.all([
+        const [clientsSnap, servicesSnap, recordsSnap, settingsSnap, expensesSnap] = await Promise.all([
             db.collection("clients").get(),
-                                                                                         db.collection("services").get(),
-                                                                                         db.collection("records").get(),
-                                                                                         db.collection("settings").doc("appData").get()
+            db.collection("services").get(),
+            db.collection("records").get(),
+            db.collection("settings").doc("appData").get(),
+            db.collection("expenses").get()
+
         ]);
 
         const clients = clientsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const records = recordsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const expenses = expensesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const settings = settingsSnap.exists ? settingsSnap.data() : { times: [], statuses: [], categories: [] };
 
         // Подтягиваем кастомные услуги (если их создавали через приложение), иначе берем из Таблицы
@@ -38,6 +41,24 @@ export async function fetchData() {
 
         let uniqueServices = [...new Set(directoryMap.map(item => item.service))];
 
+        // ТИХАЯ ФОНОВАЯ СИНХРОНИЗАЦИЯ РАСХОДОВ ОТ БОТА
+        expenses.forEach(exp => {
+            // Если поля sheetSynced вообще нет (значит это создал бот) или оно false
+            if (!exp.sheetSynced) {
+                fetch(GOOGLE_SHEETS_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ action: "addExpense", expense: exp })
+                }).then(res => res.json()).then(data => {
+                    if (data && data.status === "success") {
+                        // Помечаем в Firebase, чтобы больше не отправлять
+                        db.collection("expenses").doc(exp.id).update({ sheetSynced: true });
+                        exp.sheetSynced = true;
+                    }
+                }).catch(err => console.log("Синхронизация отложена", err));
+            }
+        });
+
         return {
             categories: categories,
             services: uniqueServices,
@@ -45,7 +66,8 @@ export async function fetchData() {
             statuses: settings.statuses || [],
             directoryMap: directoryMap,
             clients: clients,
-            records: records
+            records: records,
+            expenses: expenses
         };
     } catch (error) {
         console.error("Ошибка загрузки данных из Firebase:", error);
@@ -81,6 +103,19 @@ export async function sendData(action, payload) {
             await db.collection("clients").doc(payload.client.id).delete();
         } else if (action === "updateSettings") {
             await db.collection("settings").doc("appData").update(payload.settings);
+        } else if (action === "addExpense") {
+            payload.expense.sheetSynced = true; // Приложение помечает ручные записи
+            let docRef = await db.collection("expenses").add(payload.expense);
+            payload.expense.id = docRef.id;
+        } else if (action === "updateExpense") {
+            if (!payload.oldExpense.id) throw new Error("Нет ID расхода");
+            let updatedData = { ...payload.newExpense, sheetSynced: true };
+            delete updatedData.id;
+            await db.collection("expenses").doc(payload.oldExpense.id).update(updatedData);
+            payload.newExpense.id = payload.oldExpense.id;
+        } else if (action === "deleteExpense") {
+            if (!payload.expense.id) throw new Error("Нет ID расхода");
+            await db.collection("expenses").doc(payload.expense.id).delete();
         }
 
         // 2. Фоновый бэкап в Google Таблицы

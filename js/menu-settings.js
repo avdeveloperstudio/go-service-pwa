@@ -1,5 +1,6 @@
 import { state } from './state.js';
 import { sendData } from './api.js';
+import { renderExpensesTab } from './tab-expenses.js';
 
 const btnMenu = document.getElementById('btn-menu');
 const sidebarOverlay = document.getElementById('sidebar-overlay');
@@ -11,6 +12,7 @@ const sidebarSettingsMenu = document.getElementById('sidebar-settings-menu');
 const sidebarTimeSlotsView = document.getElementById('sidebar-time-slots-view');
 const sidebarCategoriesView = document.getElementById('sidebar-categories-view');
 
+const navExpenses = document.getElementById('nav-expenses');
 const navSettings = document.getElementById('nav-settings');
 const btnSidebarBack = document.getElementById('btn-sidebar-back');
 const settingTimeSlots = document.getElementById('setting-time-slots');
@@ -36,6 +38,15 @@ export function initMenuAndSettings() {
 
     btnCloseSidebar.addEventListener('click', () => sidebarOverlay.classList.add('hidden'));
     sidebarOverlay.addEventListener('click', (e) => { if (e.target === sidebarOverlay) sidebarOverlay.classList.add('hidden'); });
+
+    navExpenses.addEventListener('click', () => {
+        sidebarOverlay.classList.add('hidden');
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.getElementById('tab-expenses').classList.add('active');
+        document.getElementById('fab-add').style.display = 'flex'; // Возвращаем кнопку +
+        renderExpensesTab();
+    });
 
     navSettings.addEventListener('click', () => {
         sidebarMainMenu.style.display = 'none';
