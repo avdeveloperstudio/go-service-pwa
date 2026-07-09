@@ -271,6 +271,7 @@ body {
    ========================================= */
 .calendar-day { padding: 10px 5px; border-radius: 8px; cursor: pointer; position: relative; font-weight: 500; transition: background 0.2s; }
 .calendar-day:hover { background: var(--bg-surface-light); }
+.calendar-day.today { background: rgba(179, 157, 219, 0.40); color: var(--accent); } /* Ненавязчивая подсветка для "сегодня" */
 .calendar-day.active { background: var(--accent); color: #fff; }
 .calendar-day.empty { visibility: hidden; }
 

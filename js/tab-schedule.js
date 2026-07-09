@@ -10,6 +10,7 @@ export function renderCalendar() {
     const year = date.getFullYear();
     const month = date.getMonth();
     const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+    const realTodayFormatted = formatDateForDB(new Date());
 
     monthYearText.innerText = `${monthNames[month]} ${year}`;
     calendarDays.innerHTML = '';
@@ -51,8 +52,12 @@ export function renderCalendar() {
             dayDiv.appendChild(dot);
         }
 
+        if (cellDateFormatted === realTodayFormatted) {
+            dayDiv.classList.add('today'); // Накладываем тень "сегодня"
+        }
+
         if (formatDateForDB(state.currentDate) === cellDateFormatted) {
-            dayDiv.classList.add('active');
+            dayDiv.classList.add('active'); // Выделение выбранной даты (перекроет .today в CSS)
         }
 
         dayDiv.addEventListener('click', () => {

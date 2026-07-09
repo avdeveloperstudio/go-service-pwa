@@ -2,15 +2,22 @@ import { state } from './state.js';
 
 let revenueChartInstance = null;
 let categoryChartInstance = null;
+let expenseLineChartInstance = null;
+let expenseCategoryChartInstance = null;
 let currentPeriod = 'month';
+let lastCategoriesHash = '';
 
 // Элементы
 const btnFilters = document.querySelectorAll('.stat-filter-btn');
 const customDatesBlock = document.getElementById('stat-custom-dates');
 const inputDateFrom = document.getElementById('stat-date-from');
 const inputDateTo = document.getElementById('stat-date-to');
+const catFilterSelect = document.getElementById('stat-category-filter');
 
 export function initStatsTab() {
+    // Подписка на изменение категории
+    catFilterSelect.addEventListener('change', renderStats);
+
     // Вешаем клики на фильтры периодов
     btnFilters.forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -77,33 +84,61 @@ export function renderStats() {
     }
 
     document.getElementById('chart-revenue-title').innerText = `Динамика дохода ${periodText}`;
-    document.getElementById('chart-categories-title').innerText = `Топ категорий ${periodText}`;
+    document.getElementById('chart-categories-title').innerText = `Топ категорий. Доход ${periodText}`;
+    document.getElementById('chart-expense-categories-title').innerText = `Топ категорий. Расход ${periodText}`;
 
-    // 2. ФИЛЬТРУЕМ ЗАПИСИ
+    // Обновляем список категорий в фильтре, если он изменился
+    const currentCatHash = JSON.stringify(state.categories);
+    if (lastCategoriesHash !== currentCatHash) {
+        const currentSelected = catFilterSelect.value;
+        catFilterSelect.innerHTML = '<option value="all">Все категории</option>';
+        if (state.categories) {
+            state.categories.forEach(cat => {
+                const name = typeof cat === 'object' ? cat.name : cat;
+                catFilterSelect.innerHTML += `<option value="${name}">${name}</option>`;
+            });
+        }
+        catFilterSelect.value = currentSelected || 'all';
+        if (!catFilterSelect.value) catFilterSelect.value = 'all';
+        lastCategoriesHash = currentCatHash;
+    }
+
+    const selectedCategory = catFilterSelect.value;
+
+    // 2. ФИЛЬТРУЕМ ЗАПИСИ (ДОХОДЫ)
     const validRecords = state.records.filter(r => {
         if (!r.date) return false;
         const [y, m, d] = r.date.split('-');
         const rDate = new Date(y, m - 1, d);
         if (rDate < startDate || rDate > endDate) return false;
+        if (!r.category || r.category.trim() === '') return false;
 
-        // ИСКЛЮЧЕНИЕ 1: Записи без категории вообще не идут в статистику
-        if (!r.category || r.category.trim() === '') {
-            return false;
-        }
+        // Фильтр по выбранной категории
+        if (selectedCategory !== 'all' && r.category !== selectedCategory) return false;
 
-        // ИСКЛЮЧЕНИЕ 2: Проверка флага "Учитывать в статистике"
         if (state.categories) {
             const catObj = state.categories.find(c => (typeof c === 'object' ? c.name : c) === r.category);
-            if (catObj && typeof catObj === 'object' && catObj.inStats === false) {
-                return false;
-            }
+            if (catObj && typeof catObj === 'object' && catObj.inStats === false) return false;
         }
+        return true;
+    });
+
+    // 2.1 ФИЛЬТРУЕМ РАСХОДЫ
+    const validExpenses = (state.expenses || []).filter(e => {
+        if (!e.date) return false;
+        const [y, m, d] = e.date.split('-');
+        const eDate = new Date(y, m - 1, d);
+        if (eDate < startDate || eDate > endDate) return false;
+
+        // Фильтр по выбранной категории
+        if (selectedCategory !== 'all' && e.category !== selectedCategory) return false;
+
         return true;
     });
 
     // 3. СЧИТАЕМ МЕТРИКИ, ЧЕК И ЧИСТУЮ ПРИБЫЛЬ
     let totalRevenue = 0;
-    let totalExpense = 0; // Задел на будущие расходы
+    let totalExpense = 0;
     let completedCount = 0;
     let minCheck = Infinity;
     let maxCheck = 0;
@@ -134,13 +169,22 @@ export function renderStats() {
 
     if (minCheck === Infinity) minCheck = 0;
 
+    // Считаем расходы
+    const expenseByCategory = {};
+    validExpenses.forEach(e => {
+        const price = parseFloat(e.price) || 0;
+        totalExpense += price;
+        const cat = e.category;
+        expenseByCategory[cat] = (expenseByCategory[cat] || 0) + price;
+    });
+
     const avgCheck = completedCount > 0 ? (totalRevenue / completedCount).toFixed(2) : "0.00";
-    const netProfit = totalRevenue - totalExpense; // Расчет чистой прибыли
+    const netProfit = totalRevenue - totalExpense;
 
     // 4. ОБНОВЛЯЕМ ИНТЕРФЕЙС
     document.getElementById('stat-revenue-total').innerHTML = `${totalRevenue.toFixed(2)} <span class="icon-byn"></span>`;
     document.getElementById('stat-expense-total').innerHTML = `${totalExpense.toFixed(2)} <span class="icon-byn"></span>`;
-    document.getElementById('stat-net-profit').innerHTML = `${netProfit.toFixed(2)} <span class="icon-byn"></span>`; // Вставляем чистую прибыль
+    document.getElementById('stat-net-profit').innerHTML = `${netProfit.toFixed(2)} <span class="icon-byn"></span>`;
     document.getElementById('stat-records-total').innerText = validRecords.length;
 
     document.getElementById('stat-min-check').innerHTML = `${minCheck.toFixed(2)} <span class="icon-byn" style="font-size: 0.8em;"></span>`;
@@ -163,35 +207,46 @@ export function renderStats() {
             const color = statusColors[status] || 'var(--accent)';
 
             statusesListEl.innerHTML += `
-                <div style="font-size: 0.85rem; display: flex; flex-direction: column; gap: 2px;">
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: var(--text-main);">${status}</span>
-                        <span style="font-weight: bold;">${count} <span style="color: var(--text-muted); font-weight: normal;">(${Math.round(percent)}%)</span></span>
-                    </div>
-                    <div class="stat-progress-bg">
-                        <div class="stat-progress-fill" style="width: ${percent}%; background: ${color};"></div>
-                    </div>
-                </div>
+            <div style="font-size: 0.85rem; display: flex; flex-direction: column; gap: 2px;">
+            <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-main);">${status}</span>
+            <span style="font-weight: bold;">${count} <span style="color: var(--text-muted); font-weight: normal;">(${Math.round(percent)}%)</span></span>
+            </div>
+            <div class="stat-progress-bg">
+            <div class="stat-progress-fill" style="width: ${percent}%; background: ${color};"></div>
+            </div>
+            </div>
             `;
         });
     }
 
-    // 6. ОБНОВЛЕНИЕ ГРАФИКОВ
     if (typeof Chart !== 'undefined') {
-        renderCharts(revenueByDate, revenueByCategory);
+        renderCharts(revenueByDate, revenueByCategory, expenseByCategory);
     }
 }
 
-function renderCharts(revenueByDate, revenueByCategory) {
-    // Подготовка данных для линейного графика (Доход по дням)
-    // Сортируем даты по хронологии
-    const sortedDates = Object.keys(revenueByDate).sort((a, b) => {
+function renderCharts(revenueByDate, revenueByCategory, expenseByCategory) {
+    // ХЕЛПЕР: Функция сортировки дат для линейных графиков
+    const sortDates = (dict) => Object.keys(dict).sort((a, b) => {
         const [d1, m1] = a.split('.'); const [d2, m2] = b.split('.');
-        return new Date(`2024-${m1}-${d1}`) - new Date(`2024-${m2}-${d2}`); // Год не важен для сортировки
+        return new Date(`2024-${m1}-${d1}`) - new Date(`2024-${m2}-${d2}`);
     });
 
-    const lineLabels = sortedDates;
-    const lineData = sortedDates.map(d => revenueByDate[d]);
+    // ХЕЛПЕР: Формирование массива лейблов с процентами
+    const getLabelsWithPercent = (labels, data) => {
+        const total = data.reduce((a, b) => a + b, 0);
+        return labels.map((label, i) => {
+            const pct = total > 0 ? Math.round((data[i] / total) * 100) : 0;
+            return `${label} (${pct}%)`;
+        });
+    };
+
+    const pieColors = ['#B39DDB', '#435E6F', '#4CAF50', '#FF9500', '#E91E63', '#00BCD4', '#9C27B0'];
+
+    // 1. ГРАФИК ДОХОДОВ (Линейный)
+    const revSortedDates = sortDates(revenueByDate);
+    const lineLabels = revSortedDates;
+    const lineData = revSortedDates.map(d => revenueByDate[d]);
 
     if (revenueChartInstance) revenueChartInstance.destroy();
     const ctxLine = document.getElementById('chart-revenue').getContext('2d');
@@ -200,56 +255,47 @@ function renderCharts(revenueByDate, revenueByCategory) {
         data: {
             labels: lineLabels.length > 0 ? lineLabels : ['Нет данных'],
             datasets: [{
-                label: 'Доход',
-                data: lineData.length > 0 ? lineData : [0],
-                borderColor: '#B39DDB', // var(--accent)
-    backgroundColor: 'rgba(179, 157, 219, 0.2)',
-                                     borderWidth: 3,
-                                     tension: 0.4, // Плавные изгибы
-                                     fill: true,
-                                     pointBackgroundColor: '#1E1E24',
-                                     pointBorderColor: '#B39DDB',
-                                     pointRadius: 4
+                label: 'Доход', data: lineData.length > 0 ? lineData : [0],
+                borderColor: '#B39DDB', backgroundColor: 'rgba(179, 157, 219, 0.2)',
+                                     borderWidth: 3, tension: 0.4, fill: true, pointBackgroundColor: '#1E1E24', pointBorderColor: '#B39DDB', pointRadius: 4
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, ticks: { maxTicksLimit: 5 } },
-                x: { grid: { display: false } }
-            }
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { maxTicksLimit: 5 } }, x: { grid: { display: false } } } }
     });
 
-    // Подготовка данных для кольцевого графика (Категории)
-    const sortedCategories = Object.keys(revenueByCategory).sort((a, b) => revenueByCategory[b] - revenueByCategory[a]);
-    const pieLabels = sortedCategories;
-    const pieData = sortedCategories.map(c => revenueByCategory[c]);
-
-    // Красивые цвета для категорий
-    const pieColors = ['#B39DDB', '#435E6F', '#4CAF50', '#FF9500', '#E91E63', '#00BCD4', '#9C27B0'];
+    // 2. ГРАФИК КАТЕГОРИЙ ДОХОДА (Круговой с процентами)
+    const sortedRevCategories = Object.keys(revenueByCategory).sort((a, b) => revenueByCategory[b] - revenueByCategory[a]);
+    const revPieData = sortedRevCategories.map(c => revenueByCategory[c]);
+    const revPieLabels = getLabelsWithPercent(sortedRevCategories, revPieData);
 
     if (categoryChartInstance) categoryChartInstance.destroy();
     const ctxPie = document.getElementById('chart-categories').getContext('2d');
     categoryChartInstance = new Chart(ctxPie, {
         type: 'doughnut',
         data: {
-            labels: pieLabels.length > 0 ? pieLabels : ['Нет данных'],
-            datasets: [{
-                data: pieData.length > 0 ? pieData : [1],
-                backgroundColor: pieData.length > 0 ? pieColors : ['#2A2A35'],
-                borderWidth: 0
-            }]
+            labels: revPieLabels.length > 0 ? revPieLabels : ['Нет данных'],
+            datasets: [{ data: revPieData.length > 0 ? revPieData : [1], backgroundColor: revPieData.length > 0 ? pieColors : ['#2A2A35'], borderWidth: 0 }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '70%',
-            plugins: {
-                legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } }
-            }
-        }
+        options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } } }
     });
+
+    // 3. ГРАФИК КАТЕГОРИЙ РАСХОДА (Круговой с процентами)
+    const sortedExpCategories = Object.keys(expenseByCategory).sort((a, b) => expenseByCategory[b] - expenseByCategory[a]);
+    const expPieData = sortedExpCategories.map(c => expenseByCategory[c]);
+    const expPieLabels = getLabelsWithPercent(sortedExpCategories, expPieData);
+
+    if (expenseCategoryChartInstance) expenseCategoryChartInstance.destroy();
+    const ctxExpPie = document.getElementById('chart-expense-categories').getContext('2d');
+
+    // Проверка на наличие canvas (на всякий случай, если он не успел отрендериться)
+    if (ctxExpPie) {
+        expenseCategoryChartInstance = new Chart(ctxExpPie, {
+            type: 'doughnut',
+            data: {
+                labels: expPieLabels.length > 0 ? expPieLabels : ['Нет данных'],
+                datasets: [{ data: expPieData.length > 0 ? expPieData : [1], backgroundColor: expPieData.length > 0 ? pieColors : ['#2A2A35'], borderWidth: 0 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } } }
+        });
+    }
 }

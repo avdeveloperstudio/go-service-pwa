@@ -178,6 +178,14 @@
                     </div>
                 </div>
 
+                <!-- ФИЛЬТР ПО КАТЕГОРИИ -->
+                <div style="margin-bottom: 20px; background: var(--bg-surface-light); padding: 12px; border-radius: 12px;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Категория</label>
+                    <select id="stat-category-filter" style="width: 100%; padding: 8px; border-radius: 6px; background: var(--bg-surface); color: var(--text-main); border: none; outline: none;">
+                        <option value="all">Все категории</option>
+                    </select>
+                </div>
+
                 <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                         <div style="background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05)); border: 1px solid rgba(76, 175, 80, 0.3); border-radius: 12px; padding: 15px;">
@@ -219,6 +227,7 @@
                     </div>
                 </div>
 
+                <!-- ГРАФИКИ ДОХОДОВ -->
                 <div style="background: var(--bg-surface-light); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
                     <div id="chart-revenue-title" style="font-size: 0.95rem; font-weight: bold; margin-bottom: 15px; color: var(--accent);">Динамика дохода</div>
                     <div style="position: relative; height: 220px; width: 100%;">
@@ -227,9 +236,17 @@
                 </div>
 
                 <div style="background: var(--bg-surface-light); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
-                    <div id="chart-categories-title" style="font-size: 0.95rem; font-weight: bold; margin-bottom: 15px; color: var(--accent);">Топ категорий</div>
+                    <div id="chart-categories-title" style="font-size: 0.95rem; font-weight: bold; margin-bottom: 15px; color: var(--accent);">Топ категорий (Доходы)</div>
                     <div style="position: relative; height: 220px; width: 100%;">
                         <canvas id="chart-categories"></canvas>
+                    </div>
+                </div>
+
+                <!-- ГРАФИКИ РАСХОДОВ -->
+                <div style="background: var(--bg-surface-light); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+                    <div id="chart-expense-categories-title" style="font-size: 0.95rem; font-weight: bold; margin-bottom: 15px; color: var(--status-noshow);">Топ категорий (Расходы)</div>
+                    <div style="position: relative; height: 220px; width: 100%;">
+                        <canvas id="chart-expense-categories"></canvas>
                     </div>
                 </div>
 
