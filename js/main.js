@@ -22,6 +22,7 @@ const inputCategory = document.getElementById('input-category');
 const inputService = document.getElementById('input-service');
 const inputStatus = document.getElementById('input-status');
 const inputPrice = document.getElementById('input-price');
+const inputComment = document.getElementById('input-comment');
 const clientPreview = document.getElementById('client-info-preview');
 
 const modalExpense = document.getElementById('modal-expense');
@@ -104,6 +105,7 @@ document.getElementById('fab-add').addEventListener('click', () => {
         inputDate.value = formatDateForDB(state.currentDate);
         inputStatus.value = 'Активна';
         inputPrice.value = '';
+        inputComment.value = '';
         modal.classList.remove('hidden');
     }
 });
@@ -114,6 +116,16 @@ document.getElementById('btn-close-expense-modal').addEventListener('click', () 
 document.getElementById('client-form').reset(); });
 
 // === ФОРМА ЗАПИСИ (ЖУРНАЛ) ===
+
+// Приводим первую букву примечания к верхнему регистру.
+// Пробелы, переносы строк и остальной текст остаются без изменений.
+function capitalizeFirstNoteLetter(text) {
+    return text.replace(/\p{L}/u, letter => letter.toLocaleUpperCase('ru-RU'));
+}
+
+inputComment.addEventListener('blur', () => {
+    inputComment.value = capitalizeFirstNoteLetter(inputComment.value);
+});
 
 function populateFormDropdowns() {
     renderClientList([...state.clients].sort((a, b) => a.name.localeCompare(b.name)));
@@ -193,6 +205,7 @@ export function openEditModal(record) {
     inputService.value = record.service;
     inputStatus.value = record.status;
     inputPrice.value = record.price || '';
+    inputComment.value = record.comment || '';
     clientDropdown.classList.add('hidden');
     modal.classList.remove('hidden');
 }
@@ -218,7 +231,7 @@ form.addEventListener('submit', async (e) => {
         client: inputClient.value, date: inputDate.value, time: inputTime.value,
         category: inputCategory.value, service: inputService.value, status: inputStatus.value,
         price: inputPrice.value ? parseFloat(inputPrice.value.replace(',', '.')) : 0,
-                      comment: "", phone: clientData.phone || "", instagram: clientData.instagram || ""
+                      comment: capitalizeFirstNoteLetter(inputComment.value), phone: clientData.phone || "", instagram: clientData.instagram || ""
     };
 
     const action = appState.editingRecord ? 'updateRecord' : 'addRecord';
