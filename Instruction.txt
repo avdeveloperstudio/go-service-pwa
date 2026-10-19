@@ -1,0 +1,17 @@
+Local connect:
+Terminal: python -m http.server 5500
+Browser: http://127.0.0.1:5500/?utm_source=chatgpt.com
+___
+
+Application link: https://avdeveloperstudio.github.io/go-service-pwa/
+___
+
+Firebase link: https://console.firebase.google.com/u/0/project/go-service-pwa/firestore/databases/-default-/data/~2Frecords~2F86LK6eTZgu2lnCbO7DOd
+acc: vadimavetisov@gmail.com
+___
+
+Github acc: avdeveloperstudio
+___
+
+Google sheets acc: vadimavetisov@gmail.com
+___
