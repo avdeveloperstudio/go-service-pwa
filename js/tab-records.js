@@ -2,6 +2,7 @@ import { state } from './state.js';
 import { openEditModal } from './main.js';
 import { sendData, fetchData } from './api.js';
 import { renderCalendar, renderDailyRecords } from './tab-schedule.js';
+import { escapeHtml } from './utils.js';
 
 let isSearchInitialized = false;
 let isListListenerAttached = false;
@@ -390,6 +391,9 @@ function buildGroupHtml(title, count, records, isOpen, extraClass = '', isSearch
         const [y, m, d] = record.date.split('-');
         const dateStr = `${d}.${m}.${y}`;
         let priceHTML = record.price > 0 ? `<div class="card-price">${record.price.toFixed(2)} <span class="icon-byn"></span></div>` : '';
+        const commentHTML = typeof record.comment === 'string' && record.comment.trim()
+            ? `<div class="card-comment"><span class="card-comment-label">Примечание:</span> ${escapeHtml(record.comment.trim())}</div>`
+            : '';
 
         return `
         <div class="record-card status-${record.status}" data-id="${record.id}" style="margin-bottom: 8px;">
@@ -409,6 +413,7 @@ function buildGroupHtml(title, count, records, isOpen, extraClass = '', isSearch
         <div class="card-client" style="font-size: 1.05rem;"><i class="ph ph-user"></i> ${record.client}</div>
         <div class="card-service" style="margin-bottom: 0;">${record.category} | ${record.service}</div>
         ${priceHTML}
+        ${commentHTML}
         </div>
         </div>
         </div>`;

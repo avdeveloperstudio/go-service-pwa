@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { formatDateForDB } from './utils.js';
+import { formatDateForDB, escapeHtml } from './utils.js';
 import { sendData, fetchData } from './api.js';
 import { openEditModal } from './main.js'; // Функция модалки приедет из main.js
 
@@ -89,6 +89,9 @@ export function renderDailyRecords() {
         const card = document.createElement('div');
         card.classList.add('record-card', `status-${record.status}`);
         let priceHTML = record.price > 0 ? `<div class="card-price">${record.price.toFixed(2)} <span class="icon-byn"></span></div>` : '';
+        const commentHTML = typeof record.comment === 'string' && record.comment.trim()
+            ? `<div class="card-comment"><span class="card-comment-label">Примечание:</span> ${escapeHtml(record.comment.trim())}</div>`
+            : '';
 
         card.innerHTML = `
         <div class="card-actions-bg">
@@ -106,6 +109,7 @@ export function renderDailyRecords() {
         <div class="card-client"><i class="ph ph-user"></i> ${record.client}</div>
         <div class="card-service">${record.category} | ${record.service}</div>
         ${priceHTML}
+        ${commentHTML}
         </div>
         </div>
         `;

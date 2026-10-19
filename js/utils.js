@@ -11,3 +11,9 @@ export function formatDateForDB(dateInput) {
     if (day.length < 2) day = '0' + day;
     return [year, month, day].join('-');
 }
+
+// Безопасный вывод произвольного текста в шаблонах HTML-карточек.
+export function escapeHtml(value) {
+    const entities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    return String(value ?? '').replace(/[&<>"']/g, character => entities[character]);
+}

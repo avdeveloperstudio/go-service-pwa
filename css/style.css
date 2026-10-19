@@ -514,3 +514,19 @@ body {
     border-radius: 4px;
     transition: width 0.5s ease;
 }
+
+/* Примечание — отдельная нижняя строка карточки записи */
+.card-comment {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: 9px;
+    padding-top: 9px;
+    color: var(--text-main);
+    font-size: 0.85rem;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.card-comment-label {
+    color: var(--text-muted);
+    font-weight: 500;
+}
